@@ -1,0 +1,79 @@
+name: Build and push image to ECR
+description: Pushes an image to ECR when changes are detected in the source code.
+
+inputs:
+  aws_account_id:
+    description: 'ECR aws account id'
+    required: true
+  aws_region:
+    description: 'ECR aws region'
+    required: true
+  ecr_repository_name:
+    description: 'ECR repo name'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: dorny/paths-filter@v3
+      id: changes
+      with:
+        filters: |
+          src:
+            - 'src/**'
+      
+    - name: Check if ECR repository is empty
+      id: check_should_build
+      shell: bash
+      run: |
+        IMAGE_COUNT=$(aws ecr describe-images --repository-name ${{ inputs.ecr_repository_name }} --region ${{ inputs.aws_region }} --query 'imageDetails | length(@)' --output text)
+        echo Image count: "$IMAGE_COUNT"
+        if [[ "${{ steps.changes.outputs.src }}" == "true" || "$IMAGE_COUNT" -eq 0 ]]; then
+          echo "Either src changed or ECR is empty"
+          echo "SHOULD_BUILD=true" >> $GITHUB_ENV
+        else
+          echo "Neither src changed nor ECR is empty"
+          echo "SHOULD_BUILD=false" >> $GITHUB_ENV
+        fi
+
+    - if: env.SHOULD_BUILD == 'true'
+      name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - if: env.SHOULD_BUILD == 'true'
+      name: Set variables
+      shell: bash
+      run: |
+        echo "LOCAL_IMAGE=${{ inputs.ecr_repository_name }}:local" >> $GITHUB_ENV
+        echo "IMAGE_TAG=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
+
+    - if: env.SHOULD_BUILD == 'true'
+      name: Build Docker Image
+      shell: bash
+      run: |
+        docker build . -t $LOCAL_IMAGE
+        docker tag $LOCAL_IMAGE ${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com/${{ inputs.ecr_repository_name }}:$IMAGE_TAG
+
+    - if: env.SHOULD_BUILD == 'true'
+      name: Push Docker Image to ECR
+      shell: bash
+      run: |
+        aws ecr get-login-password --region ${{ inputs.aws_region }} | docker login --username AWS --password-stdin ${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com
+        docker push ${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com/${{ inputs.ecr_repository_name }}:$IMAGE_TAG
+        IMAGE_URI="${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com/${{ inputs.ecr_repository_name }}:$IMAGE_TAG"
+        echo "NEWLY BUILT Image URI is $IMAGE_URI"
+        echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+        echo Image:$IMAGE_URI
+
+    - if: env.SHOULD_BUILD != 'true'
+      name: Get Latest ECR Image Tag
+      shell: bash
+      run: |
+        LATEST_TAG=$(aws ecr describe-images --repository-name ${{ inputs.ecr_repository_name }} \
+                    --region ${{ inputs.aws_region }} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)
+        IMAGE_URI="${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com/${{ inputs.ecr_repository_name }}:$LATEST_TAG"
+        echo "EXISTING Image URI is $IMAGE_URI"
+        echo "IMAGE_TAG=$LATEST_TAG" >> $GITHUB_ENV
+        echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV

@@ -1,0 +1,16 @@
+{
+  "name": "app",
+  "version": "1.0.1",
+  "main": "app.js",
+  "scripts": {
+    "start": "node src/app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "aws-serverless-express": "^3.4.0",
+    "express": "^4.20.0",
+    "os": "^0.1.2"
+  }
+}

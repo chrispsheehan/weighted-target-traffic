@@ -51,16 +51,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: ${{ inputs.aws_region }}
-          role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/${{ inputs.aws_role }}
+          aws-region: ${{ vars.aws_region }}
+          role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
           role-session-name: GitHubActions
 
       - name: Build and push detected changes
         id: build-image
         uses: ./.github/actions/build_image
         with:
-          aws_account_id: ${{ inputs.aws_account_id }}
-          aws_region: ${{ inputs.aws_region }}
+          aws_account_id: ${{ vars.aws_account_id }}
+          aws_region: ${{ vars.aws_region }}
           ecr_repository_name: ${{ needs.ecr.outputs.ecr_repo_name }}
 
       - name: Set image_uri output

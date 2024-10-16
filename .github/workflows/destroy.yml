@@ -1,0 +1,60 @@
+name: Destroy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  tf:
+    runs-on: ubuntu-latest
+    env:
+      TF_VAR_ecs_image_uri: nnnn
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.aws_region }}
+          role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
+          role-session-name: GitHubActions
+
+      - name: Init
+        shell: bash
+        run: |
+          cd tf
+          terraform init
+    
+      - name: Destroy
+        shell: bash
+        id: destroy
+        run: |
+          cd tf
+          terraform destroy -auto-approve -var-file=${{ github.workspace }}/variables.tfvars
+
+  ecr:
+    runs-on: ubuntu-latest
+    needs: tf
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.aws_region }}
+          role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
+          role-session-name: GitHubActions
+
+      - name: Init
+        shell: bash
+        run: |
+          cd tf-ecr
+          terraform init
+    
+      - name: Destroy
+        shell: bash
+        id: destroy
+        run: |
+          cd tf-ecr
+          terraform destroy -auto-approve -var-file=${{ github.workspace }}/variables.tfvars

@@ -1,13 +1,9 @@
-module "ecr" {
-  source = "./ecr"
-
-  repo_name = var.project_name
-}
-
 module "task" {
   source = "./task"
 
   project_name   = var.project_name
+  ecr_repo_name  = var.ecr_repo_name
+  image_uri      = var.image_uri
   region         = var.region
   api_stage_name = var.vpc_link_api_stage_name
   container_port = var.container_port

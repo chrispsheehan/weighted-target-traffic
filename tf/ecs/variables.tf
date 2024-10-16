@@ -6,6 +6,14 @@ variable "region" {
   type = string
 }
 
+variable "ecr_repo_name" {
+  type = string
+}
+
+variable "image_uri" {
+  type = string
+}
+
 variable "vpc_link_api_stage_name" {
   type = string
 }

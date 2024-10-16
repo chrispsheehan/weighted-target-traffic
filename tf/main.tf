@@ -13,11 +13,13 @@ module "ecs" {
   source = "./ecs"
 
   project_name            = var.project_name
+  ecr_repo_name           = var.ecr_repo_name
+  image_uri               = var.ecs_image_uri
   region                  = var.region
   vpc_link_api_stage_name = var.vpc_link_api_stage_name
   private_vpc_id          = module.network.private_vpc_id
   private_subnet_ids      = module.network.private_subnet_ids
   container_port          = var.ecs_container_port
-  lb_target_group_arn     = module.network.l
+  lb_target_group_arn     = module.network.target_group_arn
   lb_security_group_id    = module.network.lb_security_group_id
 }

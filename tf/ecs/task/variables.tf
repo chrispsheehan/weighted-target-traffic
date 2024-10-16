@@ -2,6 +2,14 @@ variable "project_name" {
   type = string
 }
 
+variable "ecr_repo_name" {
+  type = string
+}
+
+variable "image_uri" {
+  type = string
+}
+
 variable "region" {
   type = string
 }

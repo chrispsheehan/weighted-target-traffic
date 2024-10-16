@@ -3,6 +3,10 @@ variable "project_name" {
   default = "weighted-target-traffic"
 }
 
+variable "ecr_repo_name" {
+  type = string
+}
+
 variable "region" {
   type        = string
   description = "The AWS Region to use"
@@ -19,6 +23,10 @@ variable "vpc_link_api_stage_name" {
 
 variable "ecs_container_port" {
   type = number
+}
+
+variable "ecs_image_uri" {
+  type = string
 }
 
 variable "load_balancer_port" {

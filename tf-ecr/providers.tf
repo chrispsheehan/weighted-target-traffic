@@ -8,7 +8,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "chrispsheehan-weighted-target-traffic-ecr-tfstate"
+    bucket         = "chrispsheehan-weighted-target-traffic-tfstate"
     key            = "ecr-state/terraform.tfstate"
     region         = "eu-west-2"
     encrypt        = true

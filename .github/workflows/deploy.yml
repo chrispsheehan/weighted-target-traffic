@@ -103,7 +103,7 @@ jobs:
         id: set-envs
         shell: bash
         run: |
-          cd tf/ecr
+          cd tf/network
           ECR_REPO_NAME=$(terraform output -raw repo_name)
           LB_SECURITY_GROUP_ID=$(terraform output -raw lb_security_group_id)
           API_INVOKE_URL=$(terraform output -raw api_invoke_url)

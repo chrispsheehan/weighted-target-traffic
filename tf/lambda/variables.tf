@@ -1,19 +1,17 @@
 variable "region" {
-  type        = string
-  description = "The AWS Region to use"
-  default     = "eu-west-2"
+  type = string
 }
 
-variable "function_name" {
-  type        = string
-  description = "Name of the lambda function"
-  default     = "lambda-express-api"
+variable "project_name" {
+  type = string
 }
 
-variable "function_stage" {
-  type        = string
-  description = "Lambda api stage i.e. dev/qa/production"
-  default     = "dev"
+variable "private_vpc_name" {
+  type = string
+}
+
+variable "vpc_link_api_stage_name" {
+  type = string
 }
 
 variable "lambda_zip_path" {
@@ -21,6 +19,22 @@ variable "lambda_zip_path" {
   description = "Lambda code (zipped) to be deployed"
 }
 
-variable "whitelist_ips" {
-  default = ["0.0.0.0/0"]
+variable "load_balancer_arn" {
+  type = string
+}
+
+variable "lb_security_group_id" {
+  type = string
+}
+
+variable "private_vpc_id" {
+  type = string
+}
+
+variable "private_subnet_ids" {
+  type = list(string)
+}
+
+variable "load_balancer_port" {
+  type = number
 }

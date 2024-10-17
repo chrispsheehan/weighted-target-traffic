@@ -2,19 +2,26 @@ format:
     #!/usr/bin/env bash
     terraform fmt --recursive
 
-check:
+validate:
     #!/usr/bin/env bash
-    cd tf
-    terraform validate
+    for dir in tf/*; do
+        if [ -d "$dir" ]; then
+            echo "Validating $dir"
+            cd "$dir"
+            terraform init
+            terraform validate
+            cd - > /dev/null
+        fi
+    done
 
-tf op:
+tf dir op:
     #!/usr/bin/env bash
-    cd tf
+    cd tf/{{dir}}
     terraform init
     terraform {{op}} -var-file="{{justfile_directory()}}/variables.tfvars"
 
-tf-ecr op:
+ci-tf dir op:
     #!/usr/bin/env bash
-    cd tf-ecr
+    cd tf/{{dir}}
     terraform init
-    terraform {{op}} -var-file="{{justfile_directory()}}/variables.tfvars"
+    terraform {{op}} -auto-approve -var-file="{{justfile_directory()}}/variables.tfvars"

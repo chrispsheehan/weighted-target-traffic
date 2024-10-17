@@ -22,12 +22,16 @@ variable "container_port" {
   type = number
 }
 
-variable "private_vpc_id" {
+variable "load_balancer_port" {
+  type = number
+}
+
+variable "private_vpc_name" {
   type = string
 }
 
-variable "private_subnet_ids" {
-  type = list(string)
+variable "load_balancer_arn" {
+  type = string
 }
 
 variable "lb_security_group_id" {
@@ -41,4 +45,14 @@ variable "lb_target_group_arn" {
 variable "initial_task_count" {
   type    = number
   default = 2
+}
+
+variable "cpu" {
+  type    = number
+  default = 256
+}
+
+variable "memory" {
+  type    = number
+  default = 512
 }

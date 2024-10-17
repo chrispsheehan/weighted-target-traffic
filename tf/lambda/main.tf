@@ -1,3 +1,23 @@
+resource "aws_security_group" "ecs_sg" {
+  vpc_id = var.private_vpc_id
+  name   = "${var.project_name}-ecs-sg"
+
+  ingress {
+    from_port       = 0
+    to_port         = 0
+    protocol        = "tcp"
+    security_groups = [var.lb_security_group_id]
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"          # Allow all protocols
+    cidr_blocks      = ["0.0.0.0/0"] # Allow all IPv4 traffic
+    ipv6_cidr_blocks = ["::/0"]      # Allow all IPv6 traffic
+  }
+}
+
 resource "aws_s3_bucket" "lambda_bucket" {
   bucket = local.lambda_bucket
 }
@@ -14,16 +34,21 @@ resource "aws_iam_role" "iam_for_lambda" {
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
-resource "aws_lambda_function" "lambda" {
+resource "aws_lambda_function" "this" {
   depends_on = [aws_s3_object.lambda_zip]
 
   function_name = local.lambda_name
   role          = aws_iam_role.iam_for_lambda.arn
-  handler       = "app.handler"
+  handler       = "lambda.handler"
   runtime       = local.lambda_runtime
 
   s3_bucket = aws_s3_bucket.lambda_bucket.bucket
   s3_key    = aws_s3_object.lambda_zip.key
+
+  vpc_config {
+    subnet_ids         = var.private_subnet_ids
+    security_group_ids = [var.lb_security_group_id]
+  }
 
   environment {
     variables = {
@@ -32,33 +57,14 @@ resource "aws_lambda_function" "lambda" {
   }
 }
 
+resource "aws_lb_target_group_attachment" "this" {
+  target_group_arn = var.load_balancer_arn
+  target_id        = aws_lambda_function.this.arn
+}
+
 resource "aws_lambda_permission" "this" {
   statement_id  = "${local.lambda_name}-AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.lambda.function_name
+  function_name = aws_lambda_function.this.function_name
   principal     = "apigateway.amazonaws.com"
-}
-
-resource "aws_apigatewayv2_api" "this" {
-  name          = "${local.lambda_name}-APIGateway"
-  protocol_type = "HTTP"
-  target        = aws_lambda_function.lambda.invoke_arn
-}
-
-resource "aws_apigatewayv2_integration" "this" {
-  api_id           = aws_apigatewayv2_api.this.id
-  integration_type = "AWS_PROXY"
-  integration_uri  = aws_lambda_function.lambda.invoke_arn
-}
-
-resource "aws_apigatewayv2_route" "this" {
-  api_id    = aws_apigatewayv2_api.this.id
-  route_key = "ANY /{proxy+}"
-  target    = "integrations/${aws_apigatewayv2_integration.this.id}"
-}
-
-resource "aws_apigatewayv2_stage" "this" {
-  api_id      = aws_apigatewayv2_api.this.id
-  name        = var.function_stage
-  auto_deploy = false
 }

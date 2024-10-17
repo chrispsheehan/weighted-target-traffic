@@ -104,11 +104,9 @@ jobs:
         shell: bash
         run: |
           cd tf/network
-          ECR_REPO_NAME=$(terraform output -raw repo_name)
           LB_SECURITY_GROUP_ID=$(terraform output -raw lb_security_group_id)
           API_INVOKE_URL=$(terraform output -raw api_invoke_url)
           LB_ECS_LISTENER_ARN=$(terraform output -raw lb_ecs_listener_arn)
-          echo "ECR_REPO_NAME=$ECR_REPO_NAME" >> $GITHUB_OUTPUT
           echo "LB_SECURITY_GROUP_ID=$LB_SECURITY_GROUP_ID" >> $GITHUB_OUTPUT
           echo "API_INVOKE_URL=$API_INVOKE_URL" >> $GITHUB_OUTPUT
           echo "LB_ECS_LISTENER_ARN=$LB_ECS_LISTENER_ARN" >> $GITHUB_OUTPUT

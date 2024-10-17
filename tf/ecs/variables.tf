@@ -18,13 +18,14 @@ variable "vpc_link_api_stage_name" {
   type = string
 }
 
-###############################
-### dynamic variables below ###
-################################
-
 variable "container_port" {
   type = number
 }
+
+
+###############################
+### dynamic variables below ###
+################################
 
 variable "image_uri" {
   type = string

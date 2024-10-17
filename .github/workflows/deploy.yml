@@ -10,6 +10,8 @@ permissions:
 jobs:
   ecr:
     runs-on: ubuntu-latest
+    env:
+      TF_VAR_ecr_repo_name: ${{ github.repository.name }}
     outputs:
       ecr_repo_name: ${{ steps.set-envs.outputs.ECR_REPO_NAME }}
     steps:
@@ -24,21 +26,21 @@ jobs:
       - name: Init
         shell: bash
         run: |
-          cd tf-ecr
+          cd tf/ecr
           terraform init
     
       - name: Deploy
         shell: bash
         id: deploy
         run: |
-          cd tf-ecr
+          cd tf/ecr
           terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars
 
       - name: Set env vars
         id: set-envs
         shell: bash
         run: |
-          cd tf-ecr
+          cd tf/ecr
           ECR_REPO_NAME=$(terraform output -raw repo_name)
           echo "ECR_REPO_NAME=$ECR_REPO_NAME" >> $GITHUB_OUTPUT
 
@@ -68,11 +70,13 @@ jobs:
         run: |
           echo "image_uri=${{ env.IMAGE_URI }}" >> $GITHUB_OUTPUT
 
-  tf:
-    needs: image
+  network:
     runs-on: ubuntu-latest
-    env:
-      TF_VAR_ecs_image_uri: ${{ needs.image.outputs.image_uri }}
+    outputs:
+      ecr_repo_name: ${{ steps.set-envs.outputs.ECR_REPO_NAME }}
+      lb_security_group_id: ${{ steps.set-envs.outputs.LB_SECURITY_GROUP_ID }}
+      lb_ecs_listener_arn: ${{ steps.set-envs.outputs.LB_ECS_LISTENER_ARN }}
+      api_invoke_url: ${{ steps.set-envs.outputs.API_INVOKE_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
@@ -85,12 +89,57 @@ jobs:
       - name: Init
         shell: bash
         run: |
-          cd tf
+          cd tf/network
           terraform init
     
       - name: Deploy
         shell: bash
         id: deploy
         run: |
-          cd tf
+          cd tf/network
+          terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars
+
+      - name: Set env vars
+        id: set-envs
+        shell: bash
+        run: |
+          cd tf/ecr
+          ECR_REPO_NAME=$(terraform output -raw repo_name)
+          LB_SECURITY_GROUP_ID=$(terraform output -raw lb_security_group_id)
+          API_INVOKE_URL=$(terraform output -raw api_invoke_url)
+          LB_ECS_LISTENER_ARN=$(terraform output -raw lb_ecs_listener_arn)
+          echo "ECR_REPO_NAME=$ECR_REPO_NAME" >> $GITHUB_OUTPUT
+          echo "LB_SECURITY_GROUP_ID=$LB_SECURITY_GROUP_ID" >> $GITHUB_OUTPUT
+          echo "API_INVOKE_URL=$API_INVOKE_URL" >> $GITHUB_OUTPUT
+          echo "LB_ECS_LISTENER_ARN=$LB_ECS_LISTENER_ARN" >> $GITHUB_OUTPUT
+
+  ecs:
+    needs: 
+      - image
+      - network
+    runs-on: ubuntu-latest
+    env:
+      TF_VAR_ecs_image_uri: ${{ needs.image.outputs.image_uri }}
+      TF_VAR_lb_security_group_id: ${{ needs.network.outputs.lb_security_group_id }}
+      TF_VAR_lb_target_group_arn: ${{ needs.network.outputs.lb_ecs_listener_arn}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.aws_region }}
+          role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
+          role-session-name: GitHubActions
+
+      - name: Init
+        shell: bash
+        run: |
+          cd tf/ecs
+          terraform init
+    
+      - name: Deploy
+        shell: bash
+        id: deploy
+        run: |
+          cd tf/ecs
           terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars

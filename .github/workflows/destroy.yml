@@ -7,6 +7,9 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  TF_VAR_ecr_repo_name: ${{ vars.aws_account_id }}-weighted-target-ecs
+
 jobs:
   ecs:
     runs-on: ubuntu-latest
@@ -14,7 +17,6 @@ jobs:
       TF_VAR_ecs_image_uri: nnnn
       TF_VAR_lb_security_group_id: "sg-0123456789abcdef0"
       TF_VAR_lb_target_group_arn: "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/dummy-target-group/1234567890123456"
-      TF_VAR_ecr_repo_name: ${{ vars.aws_account_id }}-weighted-target-ecs
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3

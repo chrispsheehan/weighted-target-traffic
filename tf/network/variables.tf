@@ -10,10 +10,6 @@ variable "ecs_container_port" {
   type = number
 }
 
-variable "load_balancer_port" {
-  type = number
-}
-
 variable "vpc_link_api_stage_name" {
   type = string
 }

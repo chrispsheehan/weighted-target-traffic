@@ -18,7 +18,7 @@ variable "vpc_link_api_stage_name" {
   type = string
 }
 
-variable "container_port" {
+variable "ecs_container_port" {
   type = number
 }
 

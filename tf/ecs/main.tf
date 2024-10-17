@@ -54,7 +54,7 @@ resource "aws_security_group" "ecs_sg" {
 
   ingress {
     from_port       = 0
-    to_port         = var.container_port
+    to_port         = var.ecs_container_port
     protocol        = "tcp"
     security_groups = [var.lb_security_group_id]
   }
@@ -94,7 +94,7 @@ resource "aws_ecs_service" "ecs" {
   load_balancer {
     target_group_arn = var.lb_target_group_arn
     container_name   = var.project_name
-    container_port   = var.container_port
+    container_port   = var.ecs_container_port
   }
 
   # Auto-rollback and rolling deployment settings

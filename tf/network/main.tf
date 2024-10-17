@@ -10,8 +10,8 @@ resource "aws_security_group" "lb_sg" {
   }
 
   egress {
-    from_port   = var.container_port
-    to_port     = var.container_port
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
     cidr_blocks = [data.aws_vpc.private.cidr_block]
   }
@@ -31,8 +31,8 @@ resource "aws_lb" "lb" {
 }
 
 resource "aws_lb_target_group" "ecs_tg" {
-  name     = "${var.project_name}-tg"
-  port     = var.container_port
+  name     = "ecs-tg"
+  port     = var.ecs_container_port
   protocol = "HTTP"
   vpc_id   = data.aws_vpc.private.id
 
@@ -61,7 +61,7 @@ resource "aws_lb_listener" "ecs_listener" {
 }
 
 resource "aws_lb_target_group" "lambda_tg" {
-  name        = "${var.project_name}-lambda-tg"
+  name        = "lambda-tg"
   port        = 80
   protocol    = "HTTP"
   vpc_id      = data.aws_vpc.private.id
@@ -133,13 +133,13 @@ resource "aws_apigatewayv2_integration" "lambda_integration" {
 
 resource "aws_apigatewayv2_route" "ecs_route" {
   api_id    = aws_apigatewayv2_api.this.id
-  route_key = "ANY /ecs/{proxy+}"  # Routes matching /ecs/ path
+  route_key = "ANY /ecs/{proxy+}" # Routes matching /ecs/ path
   target    = "integrations/${aws_apigatewayv2_integration.ecs_integration.id}"
 }
 
 resource "aws_apigatewayv2_route" "lambda_route" {
   api_id    = aws_apigatewayv2_api.this.id
-  route_key = "ANY /lambda/{proxy+}"  # Routes matching /lambda/ path
+  route_key = "ANY /lambda/{proxy+}" # Routes matching /lambda/ path
   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 }
 

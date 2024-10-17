@@ -7,5 +7,5 @@ output "lb_ecs_listener_arn" {
 }
 
 output "api_invoke_url" {
-  value = module.vpc_link.api_invoke_url
+  value = aws_apigatewayv2_stage.this.invoke_url
 }

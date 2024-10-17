@@ -1,5 +1,5 @@
 resource "aws_security_group" "vpc_endpoint" {
-  name        = "${var.project_name}-vpc-endpoint-sg"
+  name        = "${var.ecr_repo_name}-vpc-endpoint-sg"
   description = "Security group for VPC endpoints"
   vpc_id      = local.private_vpc_id
 

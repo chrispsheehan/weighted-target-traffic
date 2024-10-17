@@ -5,7 +5,7 @@ locals {
   container_definitions = templatefile("${path.module}/container_definitions.tpl", {
     container_name      = var.project_name
     image_uri           = local.image_uri
-    container_port      = var.container_port
+    container_port      = var.ecs_container_port
     base_path           = var.vpc_link_api_stage_name
     cpu                 = var.cpu
     memory              = var.memory

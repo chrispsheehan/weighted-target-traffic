@@ -6,7 +6,7 @@ variable "region" {
   type = string
 }
 
-variable "container_port" {
+variable "ecs_container_port" {
   type = number
 }
 

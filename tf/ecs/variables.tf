@@ -27,7 +27,7 @@ variable "ecs_container_port" {
 ### dynamic variables below ###
 ################################
 
-variable "image_uri" {
+variable "ecs_image_uri" {
   type = string
 }
 

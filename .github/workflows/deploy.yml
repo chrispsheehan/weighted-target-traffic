@@ -11,7 +11,7 @@ jobs:
   ecr:
     runs-on: ubuntu-latest
     env:
-      TF_VAR_ecr_repo_name: ${{ github.repository.name }}
+      TF_VAR_ecr_repo_name: ${{ vars.aws_account_id }}-weighted-target-ecs
     outputs:
       ecr_repo_name: ${{ steps.set-envs.outputs.ECR_REPO_NAME }}
     steps:

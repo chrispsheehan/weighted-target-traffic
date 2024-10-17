@@ -14,10 +14,6 @@ variable "vpc_link_api_stage_name" {
   type = string
 }
 
-variable "load_balancer_port" {
-  type = number
-}
-
 ###############################
 ### dynamic variables below ###
 ################################

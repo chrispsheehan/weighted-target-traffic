@@ -5,6 +5,13 @@ data "aws_vpc" "private" {
   }
 }
 
+data "aws_subnets" "private" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.private.id]
+  }
+}
+
 data "aws_iam_policy_document" "assume_role" {
   statement {
     effect = "Allow"

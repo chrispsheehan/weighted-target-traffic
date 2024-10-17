@@ -6,11 +6,11 @@ variable "region" {
   type = string
 }
 
-variable "ecr_repo_name" {
+variable "private_vpc_name" {
   type = string
 }
 
-variable "image_uri" {
+variable "ecr_repo_name" {
   type = string
 }
 
@@ -18,19 +18,15 @@ variable "vpc_link_api_stage_name" {
   type = string
 }
 
+###############################
+### dynamic variables below ###
+################################
+
 variable "container_port" {
   type = number
 }
 
-variable "load_balancer_port" {
-  type = number
-}
-
-variable "private_vpc_name" {
-  type = string
-}
-
-variable "load_balancer_arn" {
+variable "image_uri" {
   type = string
 }
 

@@ -151,6 +151,6 @@ resource "aws_apigatewayv2_stage" "ecs_stage" {
 
 resource "aws_apigatewayv2_stage" "this" {
   api_id      = aws_apigatewayv2_api.this.id
-  name        = var.api_stage_name
+  name        = var.vpc_link_api_stage_name
   auto_deploy = true
 }

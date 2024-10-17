@@ -1,5 +1,5 @@
 resource "aws_security_group" "ecs_sg" {
-  vpc_id = var.private_vpc_id
+  vpc_id = data.aws_vpc.private.id
   name   = "${var.project_name}-ecs-sg"
 
   ingress {
@@ -46,7 +46,7 @@ resource "aws_lambda_function" "this" {
   s3_key    = aws_s3_object.lambda_zip.key
 
   vpc_config {
-    subnet_ids         = var.private_subnet_ids
+    subnet_ids         = data.aws_subnets.private.ids
     security_group_ids = [var.lb_security_group_id]
   }
 

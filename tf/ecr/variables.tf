@@ -1,18 +1,19 @@
 variable "project_name" {
   type    = string
-  default = "weighted-target-traffic"
+}
+
+variable "region" {
+  type        = string
 }
 
 variable "private_vpc_name" {
   type = string
 }
 
+###############################
+### dynamic variables below ###
+################################
+
 variable "ecr_repo_name" {
   type = string
-}
-
-variable "region" {
-  type        = string
-  description = "The AWS Region to use"
-  default     = "eu-west-2"
 }

@@ -141,7 +141,7 @@ resource "aws_apigatewayv2_integration" "ecs_integration" {
 
 resource "aws_apigatewayv2_route" "ecs_route" {
   api_id    = aws_apigatewayv2_api.this.id
-  route_key = "ANY /ecs/{proxy+}" # Routes matching /ecs/ path
+  route_key = "ANY /{proxy+}"
   target    = "integrations/${aws_apigatewayv2_integration.ecs_integration.id}"
 }
 

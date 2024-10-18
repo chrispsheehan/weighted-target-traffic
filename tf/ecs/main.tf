@@ -63,11 +63,10 @@ resource "aws_security_group" "ecs_sg" {
   name   = "${var.project_name}-ecs-sg"
 
   ingress {
-    from_port       = var.ecs_container_port
+    from_port       = 0
     to_port         = var.ecs_container_port
     protocol        = "tcp"
     security_groups = [var.lb_security_group_id]
-    # cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {

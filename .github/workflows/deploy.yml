@@ -77,7 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       lb_security_group_id: ${{ steps.set-envs.outputs.LB_SECURITY_GROUP_ID }}
-      lb_ecs_listener_arn: ${{ steps.set-envs.outputs.LB_ECS_LISTENER_ARN }}
+      lb_ecs_target_group_arn: ${{ steps.set-envs.outputs.LB_ECS_TARGET_GROUP_ARN }}
       api_invoke_url: ${{ steps.set-envs.outputs.API_INVOKE_URL }}
     steps:
       - uses: actions/checkout@v4
@@ -108,10 +108,10 @@ jobs:
           cd tf/network
           LB_SECURITY_GROUP_ID=$(terraform output -raw lb_security_group_id)
           API_INVOKE_URL=$(terraform output -raw api_invoke_url)
-          LB_ECS_LISTENER_ARN=$(terraform output -raw lb_ecs_listener_arn)
+          LB_ECS_TARGET_GROUP_ARN=$(terraform output -raw lb_ecs_target_group_arn)
           echo "LB_SECURITY_GROUP_ID=$LB_SECURITY_GROUP_ID" >> $GITHUB_OUTPUT
           echo "API_INVOKE_URL=$API_INVOKE_URL" >> $GITHUB_OUTPUT
-          echo "LB_ECS_LISTENER_ARN=$LB_ECS_LISTENER_ARN" >> $GITHUB_OUTPUT
+          echo "LB_ECS_TARGET_GROUP_ARN=$LB_ECS_TARGET_GROUP_ARN" >> $GITHUB_OUTPUT
 
   ecs:
     needs:
@@ -123,7 +123,7 @@ jobs:
       TF_VAR_ecr_repo_name: ${{ needs.ecr.outputs.ecr_repo_name }}
       TF_VAR_ecs_image_uri: ${{ needs.image.outputs.image_uri }}
       TF_VAR_lb_security_group_id: ${{ needs.network.outputs.lb_security_group_id }}
-      TF_VAR_lb_target_group_arn: ${{ needs.network.outputs.lb_ecs_listener_arn}}
+      TF_VAR_lb_target_group_arn: ${{ needs.network.outputs.lb_ecs_target_group_arn}}
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3

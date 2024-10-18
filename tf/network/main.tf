@@ -3,8 +3,8 @@ resource "aws_security_group" "lb_sg" {
   name   = "${var.project_name}-lb-sg"
 
   ingress {
-    from_port   = local.ecs_listener_port
-    to_port     = local.ecs_listener_port
+    from_port   = var.ecs_container_port
+    to_port     = var.ecs_container_port
     protocol    = "tcp"
     cidr_blocks = local.private_subnet_cidrs
   }
@@ -59,7 +59,7 @@ resource "aws_lb_target_group" "ecs_tg" {
 
 resource "aws_lb_listener" "ecs_listener" {
   load_balancer_arn = aws_lb.lb.arn
-  port              = local.ecs_listener_port
+  port              = var.ecs_container_port
   protocol          = "HTTP"
 
   default_action {

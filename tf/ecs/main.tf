@@ -67,11 +67,6 @@ resource "aws_security_group" "ecs_sg" {
     to_port         = var.ecs_container_port
     protocol        = "tcp"
     security_groups = [var.lb_security_group_id]
-    # from_port        = 0
-    # to_port          = 0
-    # protocol         = "-1"          # Allow all protocols
-    # cidr_blocks      = ["0.0.0.0/0"] # Allow all IPv4 traffic
-    # ipv6_cidr_blocks = ["::/0"]      # Allow all IPv6 traffic
   }
 
   egress {

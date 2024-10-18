@@ -64,3 +64,21 @@ data "aws_iam_policy_document" "ecr_policy" {
     resources = [data.aws_ecr_repository.this.arn]
   }
 }
+
+data "aws_iam_policy_document" "tg_policy" {
+  statement {
+    actions = [
+      "elasticloadbalancing:RegisterTargets",
+      "elasticloadbalancing:DeregisterTargets",
+      "elasticloadbalancing:DescribeTargetGroups",
+      "elasticloadbalancing:DescribeTargetHealth",
+      "elasticloadbalancing:DescribeLoadBalancers"
+    ]
+
+    effect = "Allow"
+
+    resources = [
+      "${var.lb_target_group_arn}"
+    ]
+  }
+}

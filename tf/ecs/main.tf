@@ -13,6 +13,11 @@ resource "aws_iam_policy" "ecr_access_policy" {
   policy = data.aws_iam_policy_document.ecr_policy.json
 }
 
+resource "aws_iam_policy" "tg_access_policy" {
+  name   = "${local.formatted_name}_tg_access_policy"
+  policy = data.aws_iam_policy_document.tg_policy.json
+}
+
 resource "aws_iam_role_policy_attachment" "logs_access_policy_attachment" {
   role       = aws_iam_role.ecs_task_role.name
   policy_arn = aws_iam_policy.logs_access_policy.arn
@@ -21,6 +26,11 @@ resource "aws_iam_role_policy_attachment" "logs_access_policy_attachment" {
 resource "aws_iam_role_policy_attachment" "ecr_access_policy_attachment" {
   role       = aws_iam_role.ecs_task_role.name
   policy_arn = aws_iam_policy.ecr_access_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "tg_access_policy_attachment" {
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = aws_iam_policy.tg_access_policy.arn
 }
 
 resource "aws_cloudwatch_log_group" "ecs_log_group" {

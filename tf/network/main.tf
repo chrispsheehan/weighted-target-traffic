@@ -9,17 +9,17 @@ resource "aws_security_group" "lb_sg" {
     cidr_blocks = local.private_subnet_cidrs
   }
 
-  ingress {
-    from_port   = local.lambda_listener_port
-    to_port     = local.lambda_listener_port
-    protocol    = "tcp"
-    cidr_blocks = local.private_subnet_cidrs
-  }
+  # ingress {
+  #   from_port   = local.lambda_listener_port
+  #   to_port     = local.lambda_listener_port
+  #   protocol    = "tcp"
+  #   cidr_blocks = local.private_subnet_cidrs
+  # }
 
 
   egress {
-    from_port   = 80
-    to_port     = 80
+    from_port   = var.ecs_container_port
+    to_port     = var.ecs_container_port
     protocol    = "tcp"
     cidr_blocks = [data.aws_vpc.private.cidr_block]
   }

@@ -144,4 +144,4 @@ jobs:
         id: deploy
         run: |
           cd tf/ecs
-          terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars
+          terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars -replace=aws_lb_listener.ecs_listener

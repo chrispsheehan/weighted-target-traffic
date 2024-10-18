@@ -73,7 +73,6 @@ jobs:
   network:
     runs-on: ubuntu-latest
     outputs:
-      ecr_repo_name: ${{ steps.set-envs.outputs.ECR_REPO_NAME }}
       lb_security_group_id: ${{ steps.set-envs.outputs.LB_SECURITY_GROUP_ID }}
       lb_ecs_listener_arn: ${{ steps.set-envs.outputs.LB_ECS_LISTENER_ARN }}
       api_invoke_url: ${{ steps.set-envs.outputs.API_INVOKE_URL }}
@@ -112,11 +111,13 @@ jobs:
           echo "LB_ECS_LISTENER_ARN=$LB_ECS_LISTENER_ARN" >> $GITHUB_OUTPUT
 
   ecs:
-    needs: 
+    needs:
+      - ecr
       - image
       - network
     runs-on: ubuntu-latest
     env:
+      TF_VAR_ecr_repo_name: ${{ needs.ecr.outputs.ecr_repo_name }}
       TF_VAR_ecs_image_uri: ${{ needs.image.outputs.image_uri }}
       TF_VAR_lb_security_group_id: ${{ needs.network.outputs.lb_security_group_id }}
       TF_VAR_lb_target_group_arn: ${{ needs.network.outputs.lb_ecs_listener_arn}}

@@ -3,8 +3,8 @@ resource "aws_security_group" "lb_sg" {
   name   = "${var.project_name}-lb-sg"
 
   ingress {
-    from_port   = var.ecs_container_port
-    to_port     = var.ecs_container_port
+    from_port   = var.load_balancer_port
+    to_port     = var.load_balancer_port
     protocol    = "tcp"
     cidr_blocks = local.private_subnet_cidrs
   }
@@ -59,7 +59,7 @@ resource "aws_lb_target_group" "ecs_tg" {
 
 resource "aws_lb_listener" "ecs_listener" {
   load_balancer_arn = aws_lb.lb.arn
-  port              = var.ecs_container_port
+  port              = var.load_balancer_port
   protocol          = "HTTP"
 
   default_action {
@@ -150,12 +150,6 @@ resource "aws_apigatewayv2_route" "ecs_route" {
 #   route_key = "ANY /lambda/{proxy+}" # Routes matching /lambda/ path
 #   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
 # }
-
-resource "aws_apigatewayv2_stage" "ecs_stage" {
-  api_id      = aws_apigatewayv2_api.this.id
-  name        = "ecs"
-  auto_deploy = true
-}
 
 resource "aws_apigatewayv2_stage" "this" {
   api_id      = aws_apigatewayv2_api.this.id

@@ -226,16 +226,11 @@ jobs:
           role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
           role-session-name: GitHubActions
 
-      - name: Build
+      - name: build + zip
         shell: bash
         run: |
           cd src
           npm install
-
-      - name: zip
-        shell: bash
-        run: |
-          cd src
           zip -r ${{ env.TF_VAR_lambda_zip }} *
 
       - name: upload

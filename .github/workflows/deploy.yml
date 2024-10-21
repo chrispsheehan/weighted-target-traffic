@@ -132,6 +132,7 @@ jobs:
 
   network:
     runs-on: ubuntu-latest
+    needs: validate
     outputs:
       lb_security_group_id: ${{ steps.set-envs.outputs.LB_SECURITY_GROUP_ID }}
       lb_ecs_target_group_arn: ${{ steps.set-envs.outputs.LB_ECS_TARGET_GROUP_ARN }}

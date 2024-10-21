@@ -109,17 +109,17 @@ jobs:
           role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
           role-session-name: GitHubActions
 
-      - name: Build
+      - name: install
         shell: bash
-        run: |
-          cd src
+        run: |  
           npm install
+          cp -r node_modules /src/node_modules
 
       - name: zip
         shell: bash
         run: |
           cd src
-          zip -r ${{ env.lambda_zip }} *
+          zip -r ${{ env.TF_VAR_lambda_zip }} *
 
       - name: upload
         shell: bash
@@ -225,23 +225,6 @@ jobs:
           aws-region: ${{ vars.aws_region }}
           role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
           role-session-name: GitHubActions
-
-      - name: zip
-        shell: bash
-        run: |  
-          npm install
-          cp -r node_modules /src/node_modules
-
-      - name: zip
-        shell: bash
-        run: |
-          cd src
-          zip -r ${{ env.TF_VAR_lambda_zip }} *
-
-      - name: upload
-        shell: bash
-        run: |
-          aws s3 cp src/${{ env.TF_VAR_lambda_zip }} s3://${{ env.TF_VAR_lambda_bucket }}/${{ env.TF_VAR_lambda_zip }}
 
       - name: Init
         shell: bash

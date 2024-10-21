@@ -61,8 +61,9 @@ resource "aws_lb_target_group_attachment" "this" {
 }
 
 resource "aws_lambda_permission" "this" {
-  statement_id  = "${local.lambda_name}-AllowAPIGatewayInvoke"
+  statement_id  = "${local.lambda_name}-allowELBInvoke"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.this.function_name
-  principal     = "apigateway.amazonaws.com"
+  principal     = "elasticloadbalancing.amazonaws.com"
+  source_arn    = var.lb_target_group_arn
 }

@@ -113,7 +113,7 @@ jobs:
         shell: bash
         run: |  
           npm install
-          cp -r node_modules /src/node_modules
+          cp -r ${{ github.workspace }}/node_modules ${{ github.workspace }}/src/node_modules
 
       - name: zip
         shell: bash

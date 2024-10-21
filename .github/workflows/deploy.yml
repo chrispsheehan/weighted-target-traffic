@@ -178,12 +178,12 @@ jobs:
       - name: Init
         shell: bash
         run: |
-          cd tf/ecs
+          cd tf/lambda
           terraform init
         
       - name: Deploy
         shell: bash
         id: deploy
         run: |
-          cd tf/ecs
+          cd tf/lambda
           terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars

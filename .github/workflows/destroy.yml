@@ -11,6 +11,32 @@ env:
   TF_VAR_ecr_repo_name: ${{ vars.aws_account_id }}-weighted-target-ecs
 
 jobs:
+  lambda:
+    runs-on: ubuntu-latest
+    env:
+      TF_VAR_lambda_zip_path: not_exists.zip
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.aws_region }}
+          role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
+          role-session-name: GitHubActions
+
+      - name: Init
+        shell: bash
+        run: |
+          cd tf/lambda
+          terraform init
+    
+      - name: Destroy
+        shell: bash
+        id: destroy
+        run: |
+          cd tf/lambda
+          terraform destroy -auto-approve -var-file=${{ github.workspace }}/variables.tfvars
+
   ecs:
     runs-on: ubuntu-latest
     env:
@@ -41,7 +67,9 @@ jobs:
 
   network:
     runs-on: ubuntu-latest
-    needs: ecs
+    needs: 
+      - ecs
+      - lambda
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3

@@ -11,8 +11,24 @@ permissions:
   contents: read
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v2
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.aws_region }}
+          role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
+          role-session-name: GitHubActions
+
+      - name: Set image_uri output
+        shell: bash
+        run: just validate
+
   repo:
     runs-on: ubuntu-latest
+    needs: validate
     env:
       TF_VAR_ecr_repo_name: ${{ vars.aws_account_id }}-weighted-target-ecs
       TF_VAR_lambda_code_bucket_name: ${{ vars.aws_account_id }}-weighted-target-lambda-code
@@ -114,24 +130,8 @@ jobs:
         run: |
           echo "lambda_zip=${{ env.lambda_zip }}" >> $GITHUB_OUTPUT
 
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: extractions/setup-just@v2
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ vars.aws_region }}
-          role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
-          role-session-name: GitHubActions
-
-      - name: Set image_uri output
-        shell: bash
-        run: just validate
-
   network:
     runs-on: ubuntu-latest
-    needs: validate
     outputs:
       lb_security_group_id: ${{ steps.set-envs.outputs.LB_SECURITY_GROUP_ID }}
       lb_ecs_target_group_arn: ${{ steps.set-envs.outputs.LB_ECS_TARGET_GROUP_ARN }}

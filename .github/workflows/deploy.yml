@@ -97,7 +97,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: repo
     env:
-      lambda_zip: ${{ github.ref_name }}-${{ github.run_id }}.zip
+      lambda_zip: ${{ github.sha }}-${{ github.run_id }}.zip
       lambda_bucket: ${{ needs.repo.outputs.lambda_code_bucket }}
     outputs:
       lambda_zip: ${{ steps.set-lambda-zip.outputs.lambda_zip }}

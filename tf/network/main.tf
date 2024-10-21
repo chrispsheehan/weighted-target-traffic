@@ -15,6 +15,13 @@ resource "aws_security_group" "lb_sg" {
     protocol    = "tcp"
     cidr_blocks = [data.aws_vpc.private.cidr_block]
   }
+
+  egress {
+    from_port   = var.lambda_port
+    to_port     = var.lambda_port
+    protocol    = "tcp"
+    cidr_blocks = [data.aws_vpc.private.cidr_block]
+  }
 }
 
 resource "aws_lb" "lb" {

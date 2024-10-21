@@ -119,7 +119,7 @@ jobs:
         shell: bash
         run: |
           cd src
-          zip -r ${{ env.TF_VAR_lambda_zip }} *
+          zip -r ${{ env.lambda_zip }} *
 
       - name: upload
         shell: bash

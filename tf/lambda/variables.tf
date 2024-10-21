@@ -22,7 +22,11 @@ variable "vpc_link_api_stage_name" {
 ### dynamic variables below ###
 ################################
 
-variable "lambda_zip_path" {
+variable "lambda_bucket" {
+  type = string
+}
+
+variable "lambda_zip" {
   type        = string
   description = "Lambda code (zipped) to be deployed"
 }

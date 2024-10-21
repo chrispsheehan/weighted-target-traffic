@@ -16,7 +16,8 @@ jobs:
   lambda:
     runs-on: ubuntu-latest
     env:
-      TF_VAR_lambda_zip_path: not_exists.zip
+      TF_VAR_lambda_zip: not_exists.zip
+      TF_VAR_lambda_bucket: not_exists
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3

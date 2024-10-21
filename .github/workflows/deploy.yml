@@ -15,8 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TF_VAR_ecr_repo_name: ${{ vars.aws_account_id }}-weighted-target-ecs
+      TF_VAR_lambda_code_bucket_name: ${{ vars.aws_account_id }}-weighted-target-lambda-code
     outputs:
       ecr_repo_name: ${{ steps.set-envs.outputs.ECR_REPO_NAME }}
+      lambda_code_bucket: ${{ steps.set-envs.outputs.LAMBDA_CODE_BUCKET }}
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
@@ -45,7 +47,9 @@ jobs:
         run: |
           cd tf/repo
           ECR_REPO_NAME=$(terraform output -raw ecr_repo_name)
+          LAMBDA_CODE_BUCKET=$(terraform output -raw lambda_code_bucket)
           echo "ECR_REPO_NAME=$ECR_REPO_NAME" >> $GITHUB_OUTPUT
+          echo "LAMBDA_CODE_BUCKET=$LAMBDA_CODE_BUCKET" >> $GITHUB_OUTPUT
 
   image:
     runs-on: ubuntu-latest
@@ -150,10 +154,13 @@ jobs:
           terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars
 
   lambda:
-    needs: network
+    needs: 
+      - repo
+      - network
     runs-on: ubuntu-latest
     env:
-      TF_VAR_lambda_zip_path: ${{ github.ref_name }}.zip
+      TF_VAR_lambda_zip: ${{ github.ref_name }}.zip
+      TF_VAR_lambda_bucket: ${{ needs.repo.outputs.lambda_code_bucket }}
       TF_VAR_lb_security_group_id: ${{ needs.network.outputs.lb_security_group_id }}
       TF_VAR_lb_target_group_arn: ${{ needs.network.outputs.lb_lambda_target_group_arn}}
     steps:
@@ -167,14 +174,19 @@ jobs:
       - name: Build
         shell: bash
         run: |
-            cd src
-            npm install
+          cd src
+          npm install
 
       - name: zip
         shell: bash
         run: |
-            cd src
-            zip -r ${{ env.TF_VAR_lambda_zip_path }} *
+          cd src
+          zip -r ${{ env.TF_VAR_lambda_zip }} *
+
+      - name: upload
+        shell: bash
+        run: |
+          aws s3 cp src/${{ env.TF_VAR_lambda_zip }} s3://${{ env.TF_VAR_lambda_bucket }}/${{ env.TF_VAR_lambda_zip }}
 
       - name: Init
         shell: bash

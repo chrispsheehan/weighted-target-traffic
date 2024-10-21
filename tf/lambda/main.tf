@@ -18,32 +18,19 @@ resource "aws_security_group" "lambda_sg" {
   }
 }
 
-resource "aws_s3_bucket" "lambda_bucket" {
-  bucket = local.lambda_bucket
-}
-
-resource "aws_s3_object" "lambda_zip" {
-  bucket        = aws_s3_bucket.lambda_bucket.id
-  key           = basename(var.lambda_zip_path)
-  source        = var.lambda_zip_path
-  force_destroy = true
-}
-
 resource "aws_iam_role" "iam_for_lambda" {
   name               = "${local.lambda_name}-iam"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
 resource "aws_lambda_function" "this" {
-  depends_on = [aws_s3_object.lambda_zip]
-
   function_name = local.lambda_name
   role          = aws_iam_role.iam_for_lambda.arn
   handler       = "lambda.handler"
   runtime       = local.lambda_runtime
 
-  s3_bucket = aws_s3_bucket.lambda_bucket.bucket
-  s3_key    = aws_s3_object.lambda_zip.key
+  s3_bucket = var.lambda_bucket
+  s3_key    = var.lambda_zip
 
   vpc_config {
     subnet_ids         = data.aws_subnets.private.ids

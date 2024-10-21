@@ -13,3 +13,7 @@ variable "private_vpc_name" {
 variable "ecr_repo_name" {
   type = string
 }
+
+variable "lambda_code_bucket_name" {
+  type = string
+}

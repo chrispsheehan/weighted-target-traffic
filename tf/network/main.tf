@@ -68,15 +68,15 @@ resource "aws_lb_target_group" "lambda_tg" {
   target_type = "lambda"
 }
 
-# resource "aws_lb_listener" "lambda_listener" {
-#   load_balancer_arn = aws_lb.lb.arn
-#   port              = local.lambda_listener_port
-#   protocol          = "HTTP"
-#   default_action {
-#     type             = "forward"
-#     target_group_arn = aws_lb_target_group.lambda_tg.arn
-#   }
-# }
+resource "aws_lb_listener" "lambda_listener" {
+  load_balancer_arn = aws_lb.lb.arn
+  port              = local.lambda_listener_port
+  protocol          = "HTTP"
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.lambda_tg.arn
+  }
+}
 
 resource "aws_security_group" "api_gateway_vpc_link" {
   name        = "${var.project_name}-api-gateway-vpc-link-sg"
@@ -120,28 +120,28 @@ resource "aws_apigatewayv2_integration" "ecs_integration" {
   payload_format_version = "1.0"
 }
 
-# resource "aws_apigatewayv2_integration" "lambda_integration" {
-#   api_id             = aws_apigatewayv2_api.this.id
-#   integration_type   = "HTTP_PROXY"
-#   connection_type    = "VPC_LINK"
-#   connection_id      = aws_apigatewayv2_vpc_link.this.id
-#   integration_method = "ANY"
-#   integration_uri    = aws_lb_listener.lambda_listener.arn
+resource "aws_apigatewayv2_integration" "lambda_integration" {
+  api_id             = aws_apigatewayv2_api.this.id
+  integration_type   = "HTTP_PROXY"
+  connection_type    = "VPC_LINK"
+  connection_id      = aws_apigatewayv2_vpc_link.this.id
+  integration_method = "ANY"
+  integration_uri    = aws_lb_listener.lambda_listener.arn
 
-#   payload_format_version = "1.0"
-# }
+  payload_format_version = "1.0"
+}
 
 resource "aws_apigatewayv2_route" "ecs_route" {
   api_id    = aws_apigatewayv2_api.this.id
-  route_key = "ANY /{proxy+}"
+  route_key = "ANY /ecs/{proxy+}"
   target    = "integrations/${aws_apigatewayv2_integration.ecs_integration.id}"
 }
 
-# resource "aws_apigatewayv2_route" "lambda_route" {
-#   api_id    = aws_apigatewayv2_api.this.id
-#   route_key = "ANY /lambda/{proxy+}" # Routes matching /lambda/ path
-#   target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
-# }
+resource "aws_apigatewayv2_route" "lambda_route" {
+  api_id    = aws_apigatewayv2_api.this.id
+  route_key = "ANY /lambda/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+}
 
 resource "aws_cloudwatch_log_group" "api_gw_logs" {
   name              = "/apigateway/${var.project_name}-${var.vpc_link_api_stage_name}-logs"

@@ -1,10 +1,10 @@
-resource "aws_security_group" "ecs_sg" {
+resource "aws_security_group" "lambda_sg" {
   vpc_id = data.aws_vpc.private.id
-  name   = "${var.project_name}-ecs-sg"
+  name   = "${var.project_name}-lambda-sg"
 
   ingress {
     from_port       = 0
-    to_port         = 0
+    to_port         = var.lambda_port
     protocol        = "tcp"
     security_groups = [var.lb_security_group_id]
   }
@@ -52,13 +52,13 @@ resource "aws_lambda_function" "this" {
 
   environment {
     variables = {
-      foo = "bar"
+      PORT = var.lambda_port
     }
   }
 }
 
 resource "aws_lb_target_group_attachment" "this" {
-  target_group_arn = var.load_balancer_arn
+  target_group_arn = var.lb_target_group_arn
   target_id        = aws_lambda_function.this.arn
 }
 

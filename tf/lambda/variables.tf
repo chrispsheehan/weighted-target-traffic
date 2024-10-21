@@ -6,6 +6,10 @@ variable "project_name" {
   type = string
 }
 
+variable "lambda_port" {
+  type = string
+}
+
 variable "private_vpc_name" {
   type = string
 }
@@ -23,7 +27,7 @@ variable "lambda_zip_path" {
   description = "Lambda code (zipped) to be deployed"
 }
 
-variable "load_balancer_arn" {
+variable "lb_target_group_arn" {
   type = string
 }
 

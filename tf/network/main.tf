@@ -9,14 +9,6 @@ resource "aws_security_group" "lb_sg" {
     cidr_blocks = local.private_subnet_cidrs
   }
 
-  # ingress {
-  #   from_port   = local.lambda_listener_port
-  #   to_port     = local.lambda_listener_port
-  #   protocol    = "tcp"
-  #   cidr_blocks = local.private_subnet_cidrs
-  # }
-
-
   egress {
     from_port   = var.ecs_container_port
     to_port     = var.ecs_container_port
@@ -68,13 +60,13 @@ resource "aws_lb_listener" "ecs_listener" {
   }
 }
 
-# resource "aws_lb_target_group" "lambda_tg" {
-#   name        = "lambda-tg"
-#   port        = 80
-#   protocol    = "HTTP"
-#   vpc_id      = data.aws_vpc.private.id
-#   target_type = "lambda"
-# }
+resource "aws_lb_target_group" "lambda_tg" {
+  name        = "lambda-tg"
+  port        = var.lambda_port
+  protocol    = "HTTP"
+  vpc_id      = data.aws_vpc.private.id
+  target_type = "lambda"
+}
 
 # resource "aws_lb_listener" "lambda_listener" {
 #   load_balancer_arn = aws_lb.lb.arn

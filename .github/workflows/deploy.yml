@@ -3,7 +3,7 @@ name: Deploy
 on:
   push:
     branches:
-      - main
+      - api-routes
   workflow_dispatch:
 
 permissions:
@@ -78,6 +78,7 @@ jobs:
     outputs:
       lb_security_group_id: ${{ steps.set-envs.outputs.LB_SECURITY_GROUP_ID }}
       lb_ecs_target_group_arn: ${{ steps.set-envs.outputs.LB_ECS_TARGET_GROUP_ARN }}
+      lb_lambda_target_group_arn: ${{ steps.set-envs.outputs.LB_LAMBDA_TARGET_GROUP_ARN }}
       api_invoke_url: ${{ steps.set-envs.outputs.API_INVOKE_URL }}
     steps:
       - uses: actions/checkout@v4
@@ -109,9 +110,11 @@ jobs:
           LB_SECURITY_GROUP_ID=$(terraform output -raw lb_security_group_id)
           API_INVOKE_URL=$(terraform output -raw api_invoke_url)
           LB_ECS_TARGET_GROUP_ARN=$(terraform output -raw lb_ecs_target_group_arn)
+          LB_LAMBDA_TARGET_GROUP_ARN=$(terraform output -raw lb_lambda_target_group_arn)
           echo "LB_SECURITY_GROUP_ID=$LB_SECURITY_GROUP_ID" >> $GITHUB_OUTPUT
           echo "API_INVOKE_URL=$API_INVOKE_URL" >> $GITHUB_OUTPUT
           echo "LB_ECS_TARGET_GROUP_ARN=$LB_ECS_TARGET_GROUP_ARN" >> $GITHUB_OUTPUT
+          echo "LB_LAMBDA_TARGET_GROUP_ARN=$LB_LAMBDA_TARGET_GROUP_ARN" >> $GITHUB_OUTPUT
 
   ecs:
     needs:
@@ -144,4 +147,43 @@ jobs:
         id: deploy
         run: |
           cd tf/ecs
-          terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars -replace=aws_lb_listener.ecs_listener
+          terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars
+
+  lambda:
+    needs: network
+    runs-on: ubuntu-latest
+    env:
+      TF_VAR_lambda_zip_path: ${{ github.ref_name }}.zip
+      TF_VAR_lb_target_group_arn: ${{ needs.network.outputs.lb_lambda_target_group_arn}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.aws_region }}
+          role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
+          role-session-name: GitHubActions
+
+      - name: Build
+        shell: bash
+        run: |
+            cd src
+            npm install
+
+      - name: zip
+        shell: bash
+        run: |
+            cd src
+            zip -r ${{ env.TF_VAR_lambda_zip_path }} *
+
+      - name: Init
+        shell: bash
+        run: |
+          cd tf/ecs
+          terraform init
+        
+      - name: Deploy
+        shell: bash
+        id: deploy
+        run: |
+          cd tf/ecs
+          terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars

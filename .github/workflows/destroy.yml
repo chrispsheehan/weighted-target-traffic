@@ -95,6 +95,8 @@ jobs:
         
   repo:
     runs-on: ubuntu-latest
+    env:
+      TF_VAR_TF_VAR_lambda_code_bucket_name: not_exists
     needs: ecs
     steps:
       - uses: actions/checkout@v4

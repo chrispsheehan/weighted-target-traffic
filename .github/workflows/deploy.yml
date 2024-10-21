@@ -154,6 +154,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TF_VAR_lambda_zip_path: ${{ github.ref_name }}.zip
+      TF_VAR_lb_security_group_id: ${{ needs.network.outputs.lb_security_group_id }}
       TF_VAR_lb_target_group_arn: ${{ needs.network.outputs.lb_lambda_target_group_arn}}
     steps:
       - uses: actions/checkout@v4

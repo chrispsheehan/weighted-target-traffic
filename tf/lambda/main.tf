@@ -50,7 +50,8 @@ resource "aws_lambda_function" "this" {
 
   environment {
     variables = {
-      PORT = var.lambda_port
+      PORT      = var.lambda_port
+      BASE_PATH = "${var.vpc_link_api_stage_name}/lambda"
     }
   }
 }
@@ -65,5 +66,5 @@ resource "aws_lambda_permission" "this" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.this.function_name
   principal     = "elasticloadbalancing.amazonaws.com"
-  source_arn    = "${var.lb_target_group_arn}"
+  source_arn    = var.lb_target_group_arn
 }

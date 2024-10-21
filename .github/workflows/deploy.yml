@@ -44,7 +44,7 @@ jobs:
         shell: bash
         run: |
           cd tf/ecr
-          ECR_REPO_NAME=$(terraform output -raw repo_name)
+          ECR_REPO_NAME=$(terraform output -raw ecr_repo_name)
           echo "ECR_REPO_NAME=$ECR_REPO_NAME" >> $GITHUB_OUTPUT
 
   image:

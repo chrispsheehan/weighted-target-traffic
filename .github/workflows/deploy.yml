@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  ecr:
+  repo:
     runs-on: ubuntu-latest
     env:
       TF_VAR_ecr_repo_name: ${{ vars.aws_account_id }}-weighted-target-ecs
@@ -29,27 +29,27 @@ jobs:
       - name: Init
         shell: bash
         run: |
-          cd tf/ecr
+          cd tf/repo
           terraform init
     
       - name: Deploy
         shell: bash
         id: deploy
         run: |
-          cd tf/ecr
+          cd tf/repo
           terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars
 
       - name: Set env vars
         id: set-envs
         shell: bash
         run: |
-          cd tf/ecr
+          cd tf/repo
           ECR_REPO_NAME=$(terraform output -raw ecr_repo_name)
           echo "ECR_REPO_NAME=$ECR_REPO_NAME" >> $GITHUB_OUTPUT
 
   image:
     runs-on: ubuntu-latest
-    needs: ecr
+    needs: repo
     outputs:
       image_uri: ${{ steps.set-image-uri.outputs.image_uri }}
     steps:
@@ -66,7 +66,7 @@ jobs:
         with:
           aws_account_id: ${{ vars.aws_account_id }}
           aws_region: ${{ vars.aws_region }}
-          ecr_repository_name: ${{ needs.ecr.outputs.ecr_repo_name }}
+          ecr_repository_name: ${{ needs.repo.outputs.ecr_repo_name }}
 
       - name: Set image_uri output
         id: set-image-uri
@@ -118,12 +118,12 @@ jobs:
 
   ecs:
     needs:
-      - ecr
+      - repo
       - image
       - network
     runs-on: ubuntu-latest
     env:
-      TF_VAR_ecr_repo_name: ${{ needs.ecr.outputs.ecr_repo_name }}
+      TF_VAR_ecr_repo_name: ${{ needs.repo.outputs.ecr_repo_name }}
       TF_VAR_ecs_image_uri: ${{ needs.image.outputs.image_uri }}
       TF_VAR_lb_security_group_id: ${{ needs.network.outputs.lb_security_group_id }}
       TF_VAR_lb_target_group_arn: ${{ needs.network.outputs.lb_ecs_target_group_arn}}

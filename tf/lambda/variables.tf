@@ -6,10 +6,6 @@ variable "project_name" {
   type = string
 }
 
-variable "lambda_port" {
-  type = string
-}
-
 variable "private_vpc_name" {
   type = string
 }

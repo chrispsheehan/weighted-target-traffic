@@ -1,5 +1,3 @@
-data "aws_caller_identity" "current" {}
-
 data "aws_vpc" "private" {
   filter {
     name   = "tag:Name"
@@ -27,8 +25,6 @@ data "aws_route_tables" "subnet_route_tables" {
 }
 
 data "aws_iam_policy_document" "alb_logging_policy" {
-  version = "2012-10-17"
-  
   statement {
     actions   = [
       "s3:PutObject",
@@ -40,12 +36,6 @@ data "aws_iam_policy_document" "alb_logging_policy" {
     principals {
       type        = "Service"
       identifiers = ["elasticloadbalancing.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringLike"
-      variable = "AWS:SourceArn"
-      values   = ["arn:aws:elasticloadbalancing:${var.region}:${data.aws_caller_identity.current.account_id}:loadbalancer/app/${local.lb_name}/*"]
     }
   }
 }

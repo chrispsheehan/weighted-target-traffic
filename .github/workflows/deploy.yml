@@ -222,7 +222,7 @@ jobs:
       TF_VAR_lambda_bucket: ${{ needs.repo.outputs.lambda_code_bucket }}
       TF_VAR_lb_security_group_id: ${{ needs.network.outputs.lb_security_group_id }}
       TF_VAR_lb_target_group_arn: ${{ needs.network.outputs.lb_lambda_target_group_arn}}
-      TF_VAR_lb_lambda_listener_arn: ${{ needs.network.outputs.lb_lambda_listener_arn }}
+      TF_VAR_lb_listener_arn: ${{ needs.network.outputs.lb_lambda_listener_arn }}
     steps:
       - uses: actions/checkout@v4
       - uses: aws-actions/configure-aws-credentials@v4

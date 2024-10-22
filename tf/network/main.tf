@@ -76,7 +76,7 @@ resource "aws_lb_target_group" "lambda_tg" {
 
   health_check {
     interval            = 10
-    path                = "${var.vpc_link_api_stage_name}/lambda/health"
+    path                = local.lambda_healthcheck_path
     protocol            = "HTTP"
     matcher             = "200"
     timeout             = 5

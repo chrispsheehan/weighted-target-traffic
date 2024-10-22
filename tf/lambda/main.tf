@@ -67,5 +67,5 @@ resource "aws_lambda_permission" "this" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.this.function_name
   principal     = "elasticloadbalancing.amazonaws.com"
-  source_arn    = var.lb_listener_arn
+  source_arn    = var.lb_target_group_arn
 }

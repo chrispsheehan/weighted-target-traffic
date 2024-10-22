@@ -34,7 +34,7 @@ data "aws_iam_policy_document" "alb_logging_policy" {
       "s3:PutObject",
       "s3:PutObjectAcl"
     ]
-    
+
     resources = ["${aws_s3_bucket.alb_logs.arn}/*"]
 
     principals {
@@ -45,7 +45,7 @@ data "aws_iam_policy_document" "alb_logging_policy" {
     condition {
       test     = "StringLike"
       variable = "AWS:SourceArn"
-      values   = ["arn:aws:elasticloadbalancing:${var.region}:${data.aws_caller_identity.current.account_id}:loadbalancer/app/${aws_lb.lb.name}/*"]
+      values   = ["arn:aws:elasticloadbalancing:${var.region}:${data.aws_caller_identity.current.account_id}:loadbalancer/app/${local.lb_name}/*"]
     }
   }
 }

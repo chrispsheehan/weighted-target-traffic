@@ -39,7 +39,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "website_logs" {
 }
 
 resource "aws_lb" "lb" {
-  name               = "${var.project_name}-lb"
+  name               = local.lb_name
   internal           = true
   load_balancer_type = "application"
 

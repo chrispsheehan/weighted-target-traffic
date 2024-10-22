@@ -16,11 +16,6 @@ resource "aws_security_group" "lambda_sg" {
     cidr_blocks      = ["0.0.0.0/0"] # Allow all IPv4 traffic
     ipv6_cidr_blocks = ["::/0"]      # Allow all IPv6 traffic
   }
-
-  lifecycle {
-    create_before_destroy = true
-    prevent_destroy       = true
-  }
 }
 
 resource "aws_iam_role" "iam_for_lambda" {

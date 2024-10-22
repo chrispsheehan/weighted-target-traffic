@@ -30,8 +30,6 @@ app.get(`/${basePath}/host`, (req, res) => {
   });
 });
 
-module.exports = app;
-
 const server = awsServerlessExpress.createServer(app);
 
 const handler = (event, context) => {

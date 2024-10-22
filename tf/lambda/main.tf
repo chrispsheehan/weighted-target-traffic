@@ -59,6 +59,8 @@ resource "aws_lambda_function" "this" {
 }
 
 resource "aws_lb_target_group_attachment" "this" {
+  depends_on = [aws_lambda_function.this]
+
   target_group_arn = var.lb_target_group_arn
   target_id        = aws_lambda_function.this.arn
 }

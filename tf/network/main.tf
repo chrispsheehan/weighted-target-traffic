@@ -53,7 +53,7 @@ resource "aws_lb" "lb" {
 
   access_logs {
     bucket  = aws_s3_bucket.alb_logs.bucket
-    prefix  = "load-balancer-logs/"
+    prefix  = "logs"
     enabled = true
   }
 }

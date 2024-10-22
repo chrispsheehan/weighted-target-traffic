@@ -1,3 +1,5 @@
+data "aws_caller_identity" "current" {}
+
 data "aws_vpc" "private" {
   filter {
     name   = "tag:Name"
@@ -24,18 +26,68 @@ data "aws_route_tables" "subnet_route_tables" {
   }
 }
 
-data "aws_iam_policy_document" "alb_logging_policy" {
-  statement {
-    actions   = [
-      "s3:PutObject",
-      "s3:PutObjectAcl"
-    ]
+data "aws_iam_policy_document" "alb_access_logs_policy" {
+  version = "2012-10-17"
 
-    resources = ["${aws_s3_bucket.alb_logs.arn}/*"]
+  statement {
+    sid = "AllowELBRootAccount"
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+
+    actions = ["s3:PutObject"]
+
+    resources = ["arn:aws:s3:::${aws_s3_bucket.alb_access_logs.bucket}/*"]
+  }
+
+  statement {
+    sid = "AWSLogDeliveryWrite"
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["delivery.logs.amazonaws.com"]
+    }
+
+    actions = ["s3:PutObject"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "s3:x-amz-acl"
+      values   = ["bucket-owner-full-control"]
+    }
+
+    resources = ["arn:aws:s3:::${aws_s3_bucket.alb_access_logs.bucket}/*"]
+  }
+
+  statement {
+    sid = "AWSLogDeliveryAclCheck"
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["delivery.logs.amazonaws.com"]
+    }
+
+    actions = ["s3:GetBucketAcl"]
+
+    resources = ["arn:aws:s3:::${aws_s3_bucket.alb_access_logs.bucket}"]
+  }
+
+  statement {
+    sid = "AllowALBAccess"
+    effect = "Allow"
 
     principals {
       type        = "Service"
       identifiers = ["elasticloadbalancing.amazonaws.com"]
     }
+
+    actions = ["s3:PutObject"]
+
+    resources = ["arn:aws:s3:::${aws_s3_bucket.alb_access_logs.bucket}/*"]
   }
 }

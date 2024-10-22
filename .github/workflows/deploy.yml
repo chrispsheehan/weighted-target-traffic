@@ -138,6 +138,7 @@ jobs:
       lb_security_group_id: ${{ steps.set-envs.outputs.LB_SECURITY_GROUP_ID }}
       lb_ecs_target_group_arn: ${{ steps.set-envs.outputs.LB_ECS_TARGET_GROUP_ARN }}
       lb_lambda_target_group_arn: ${{ steps.set-envs.outputs.LB_LAMBDA_TARGET_GROUP_ARN }}
+      lb_lambda_listener_arn: ${{ steps.set-envs.outputs.LB_LAMBDA_LISTENER_ARN }}
       api_invoke_url: ${{ steps.set-envs.outputs.API_INVOKE_URL }}
     steps:
       - uses: actions/checkout@v4
@@ -170,10 +171,12 @@ jobs:
           API_INVOKE_URL=$(terraform output -raw api_invoke_url)
           LB_ECS_TARGET_GROUP_ARN=$(terraform output -raw lb_ecs_target_group_arn)
           LB_LAMBDA_TARGET_GROUP_ARN=$(terraform output -raw lb_lambda_target_group_arn)
+          LB_LAMBDA_LISTENER_ARN=$(terraform output -raw lb_lambda_listener_arn)
           echo "LB_SECURITY_GROUP_ID=$LB_SECURITY_GROUP_ID" >> $GITHUB_OUTPUT
           echo "API_INVOKE_URL=$API_INVOKE_URL" >> $GITHUB_OUTPUT
           echo "LB_ECS_TARGET_GROUP_ARN=$LB_ECS_TARGET_GROUP_ARN" >> $GITHUB_OUTPUT
           echo "LB_LAMBDA_TARGET_GROUP_ARN=$LB_LAMBDA_TARGET_GROUP_ARN" >> $GITHUB_OUTPUT
+          echo "LB_LAMBDA_LISTENER_ARN=$LB_LAMBDA_LISTENER_ARN" >> $GITHUB_OUTPUT
 
   ecs:
     needs:
@@ -219,6 +222,7 @@ jobs:
       TF_VAR_lambda_bucket: ${{ needs.repo.outputs.lambda_code_bucket }}
       TF_VAR_lb_security_group_id: ${{ needs.network.outputs.lb_security_group_id }}
       TF_VAR_lb_target_group_arn: ${{ needs.network.outputs.lb_lambda_target_group_arn}}
+      TF_VAR_lb_lambda_listener_arn: ${{ needs.network.outputs.lb_lambda_listener_arn }}
     steps:
       - uses: actions/checkout@v4
       - uses: aws-actions/configure-aws-credentials@v4

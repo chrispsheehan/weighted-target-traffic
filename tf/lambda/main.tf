@@ -1,6 +1,4 @@
 resource "aws_security_group" "lambda_sg" {
-  depends_on = [aws_lambda_function.this]
-
   vpc_id = data.aws_vpc.private.id
   name   = "${var.project_name}-lambda-sg"
 
@@ -17,6 +15,10 @@ resource "aws_security_group" "lambda_sg" {
     protocol         = "-1"          # Allow all protocols
     cidr_blocks      = ["0.0.0.0/0"] # Allow all IPv4 traffic
     ipv6_cidr_blocks = ["::/0"]      # Allow all IPv6 traffic
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
@@ -59,10 +61,10 @@ resource "aws_lambda_function" "this" {
 }
 
 resource "aws_lb_target_group_attachment" "this" {
-  depends_on = [aws_lambda_function.this]
-
   target_group_arn = var.lb_target_group_arn
   target_id        = aws_lambda_function.this.arn
+
+  depends_on = [aws_lambda_function.this]
 }
 
 resource "aws_lambda_permission" "this" {

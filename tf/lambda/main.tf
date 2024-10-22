@@ -3,9 +3,9 @@ resource "aws_security_group" "lambda_sg" {
   name   = "${var.project_name}-lambda-sg"
 
   ingress {
-    from_port       = var.lambda_port
-    to_port         = var.lambda_port
-    protocol        = "tcp"
+    from_port       = 0
+    to_port         = 0
+    protocol        = -1
     security_groups = [var.lb_security_group_id]
   }
 

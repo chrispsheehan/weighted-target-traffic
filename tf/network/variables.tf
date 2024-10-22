@@ -10,10 +10,6 @@ variable "ecs_container_port" {
   type = number
 }
 
-variable "lambda_port" {
-  type = string
-}
-
 variable "load_balancer_port" {
   type = number
 }

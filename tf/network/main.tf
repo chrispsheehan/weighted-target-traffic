@@ -49,7 +49,7 @@ resource "aws_lb_target_group" "ecs_tg" {
   }
 }
 
-resource "aws_lb_listener" "ecs_listener" {
+resource "aws_lb_listener" "ecs_lambda_listener" {
   load_balancer_arn = aws_lb.lb.arn
   port              = var.load_balancer_port
   protocol          = "HTTP"
@@ -59,6 +59,39 @@ resource "aws_lb_listener" "ecs_listener" {
     target_group_arn = aws_lb_target_group.ecs_tg.arn
   }
 }
+
+resource "aws_lb_listener_rule" "lambda_rule" {
+  listener_arn = aws_lb_listener.ecs_lambda_listener.arn
+  priority     = 100
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.lambda_tg.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/lambda/*"]
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "ecs_rule" {
+  listener_arn = aws_lb_listener.ecs_lambda_listener.arn
+  priority     = 200
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.ecs_tg.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/ecs/*"]
+    }
+  }
+}
+
 
 resource "aws_lb_target_group" "lambda_tg" {
   name        = "lambda-tg"
@@ -74,16 +107,6 @@ resource "aws_lb_target_group" "lambda_tg" {
     timeout             = 5
     healthy_threshold   = 2
     unhealthy_threshold = 2
-  }
-}
-
-resource "aws_lb_listener" "lambda_listener" {
-  load_balancer_arn = aws_lb.lb.arn
-  port              = local.lambda_listener_port
-  protocol          = "HTTP"
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.lambda_tg.arn
   }
 }
 
@@ -118,38 +141,21 @@ resource "aws_apigatewayv2_api" "this" {
   protocol_type = "HTTP"
 }
 
-resource "aws_apigatewayv2_integration" "ecs_integration" {
+resource "aws_apigatewayv2_integration" "this" {
   api_id             = aws_apigatewayv2_api.this.id
   integration_type   = "HTTP_PROXY"
   connection_type    = "VPC_LINK"
   connection_id      = aws_apigatewayv2_vpc_link.this.id
   integration_method = "ANY"
-  integration_uri    = aws_lb_listener.ecs_listener.arn
+  integration_uri    = aws_lb_listener.ecs_lambda_listener.arn
 
   payload_format_version = "1.0"
 }
 
-resource "aws_apigatewayv2_integration" "lambda_integration" {
-  api_id             = aws_apigatewayv2_api.this.id
-  integration_type   = "HTTP_PROXY"
-  connection_type    = "VPC_LINK"
-  connection_id      = aws_apigatewayv2_vpc_link.this.id
-  integration_method = "ANY"
-  integration_uri    = aws_lb_listener.lambda_listener.arn
-
-  payload_format_version = "1.0"
-}
-
-resource "aws_apigatewayv2_route" "ecs_route" {
+resource "aws_apigatewayv2_route" "this" {
   api_id    = aws_apigatewayv2_api.this.id
-  route_key = "ANY /ecs/{proxy+}"
-  target    = "integrations/${aws_apigatewayv2_integration.ecs_integration.id}"
-}
-
-resource "aws_apigatewayv2_route" "lambda_route" {
-  api_id    = aws_apigatewayv2_api.this.id
-  route_key = "ANY /lambda/{proxy+}"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+  route_key = "ANY /{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.this.id}"
 }
 
 resource "aws_cloudwatch_log_group" "api_gw_logs" {

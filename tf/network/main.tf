@@ -17,18 +17,18 @@ resource "aws_security_group" "lb_sg" {
   }
 }
 
-resource "aws_s3_bucket" "alb_logs" {
+resource "aws_s3_bucket" "alb_access_logs" {
   bucket        = "${var.project_name}-lb-logs"
   force_destroy = true
 }
 
 resource "aws_s3_bucket_policy" "alb_log_policy" {
-  bucket = aws_s3_bucket.alb_logs.id
+  bucket = aws_s3_bucket.alb_access_logs.id
   policy = data.aws_iam_policy_document.alb_access_logs_policy.json
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "website_logs" {
-  bucket     = aws_s3_bucket.alb_logs.id
+  bucket     = aws_s3_bucket.alb_access_logs.id
   rule {
     status = "Enabled"
     id     = "expire_all_files"
@@ -51,7 +51,7 @@ resource "aws_lb" "lb" {
   enable_cross_zone_load_balancing = true
 
   access_logs {
-    bucket  = aws_s3_bucket.alb_logs.bucket
+    bucket  = aws_s3_bucket.alb_access_logs.bucket
     prefix  = "logs"
     enabled = true
   }

@@ -37,7 +37,7 @@ resource "aws_iam_role_policy_attachment" "lambda_vpc_permissions_attach" {
 resource "aws_lambda_function" "this" {
   function_name = local.lambda_name
   role          = aws_iam_role.iam_for_lambda.arn
-  handler       = "lambda.handler"
+  handler       = local.lambda_handler
   runtime       = local.lambda_runtime
 
   s3_bucket = var.lambda_bucket

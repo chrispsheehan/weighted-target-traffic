@@ -30,16 +30,17 @@ app.get(`/${basePath}/host`, (req, res) => {
   });
 });
 
+module.exports = app;
+
 const server = awsServerlessExpress.createServer(app);
 
-exports.handler = (event, context) => {
+const handler = (event, context) => {
     try {
-      awsServerlessExpress.proxy(server, event, context);
+        awsServerlessExpress.proxy(server, event, context);
     } catch (error) {
-      console.error(`Error in handler: ${error.message}`);
-      context.fail(`Internal Server Error: ${error.message}`);
+        console.error(`Error in handler: ${error.message}`);
+        context.fail(`Internal Server Error: ${error.message}`);
     }
 };
-  
 
-module.exports = app;
+exports.handler = handler;

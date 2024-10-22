@@ -78,7 +78,7 @@ resource "aws_lambda_function" "this" {
 
 resource "aws_cloudwatch_log_group" "lambda_log_group" {
   name              = "/aws/lambda/${aws_lambda_function.this.function_name}"
-  retention_in_days = 1
+  retention_in_days = var.log_retention_days
 }
 
 resource "aws_lb_target_group_attachment" "this" {

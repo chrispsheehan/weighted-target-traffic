@@ -21,3 +21,7 @@ variable "vpc_link_api_stage_name" {
 variable "private_vpc_name" {
   type = string
 }
+
+variable "log_retention_days" {
+  type = number
+}

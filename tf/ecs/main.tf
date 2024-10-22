@@ -35,7 +35,7 @@ resource "aws_iam_role_policy_attachment" "tg_access_policy_attachment" {
 
 resource "aws_cloudwatch_log_group" "ecs_log_group" {
   name              = local.cloudwatch_log_name
-  retention_in_days = 1
+  retention_in_days = var.log_retention_days
 }
 
 resource "aws_ecs_task_definition" "task" {

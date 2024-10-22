@@ -17,6 +17,28 @@ resource "aws_security_group" "lb_sg" {
   }
 }
 
+resource "aws_s3_bucket" "alb_logs" {
+  bucket        = "${var.project_name}-lb-logs"
+  force_destroy = true
+}
+
+resource "aws_s3_bucket_policy" "alb_log_policy" {
+  bucket = aws_s3_bucket.alb_logs.id
+  policy = data.aws_iam_policy_document.alb_logging_policy.json
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "website_logs" {
+  depends_on = [aws_s3_bucket.alb_logs]
+  bucket     = aws_s3_bucket.alb_logs.id
+  rule {
+    status = "Enabled"
+    id     = "expire_all_files"
+    expiration {
+      days = var.log_retention_days
+    }
+  }
+}
+
 resource "aws_lb" "lb" {
   name               = "${var.project_name}-lb"
   internal           = true
@@ -152,15 +174,21 @@ resource "aws_apigatewayv2_integration" "this" {
   payload_format_version = "1.0"
 }
 
-resource "aws_apigatewayv2_route" "this" {
+resource "aws_apigatewayv2_route" "ecs_route" {
   api_id    = aws_apigatewayv2_api.this.id
-  route_key = "ANY /{proxy+}"
+  route_key = "ANY /ecs/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.this.id}"
+}
+
+resource "aws_apigatewayv2_route" "lambda_route" {
+  api_id    = aws_apigatewayv2_api.this.id
+  route_key = "ANY /lambda/{proxy+}"
   target    = "integrations/${aws_apigatewayv2_integration.this.id}"
 }
 
 resource "aws_cloudwatch_log_group" "api_gw_logs" {
   name              = "/aws/apigateway/${var.project_name}-${var.vpc_link_api_stage_name}-logs"
-  retention_in_days = 1
+  retention_in_days = var.log_retention_days
 }
 
 resource "aws_apigatewayv2_stage" "this" {

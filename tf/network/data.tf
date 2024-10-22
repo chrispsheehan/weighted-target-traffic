@@ -30,7 +30,11 @@ data "aws_iam_policy_document" "alb_logging_policy" {
   version = "2012-10-17"
   
   statement {
-    actions   = ["s3:PutObject"]
+    actions   = [
+      "s3:PutObject",
+      "s3:PutObjectAcl"
+    ]
+    
     resources = ["${aws_s3_bucket.alb_logs.arn}/*"]
 
     principals {

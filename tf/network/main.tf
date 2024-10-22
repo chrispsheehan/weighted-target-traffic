@@ -24,7 +24,7 @@ resource "aws_s3_bucket" "alb_logs" {
 
 resource "aws_s3_bucket_policy" "alb_log_policy" {
   bucket = aws_s3_bucket.alb_logs.id
-  policy = data.aws_iam_policy_document.alb_logging_policy.json
+  policy = data.aws_iam_policy_document.alb_access_logs_policy.json
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "website_logs" {

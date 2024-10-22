@@ -40,7 +40,7 @@ data "aws_iam_policy_document" "alb_access_logs_policy" {
 
     actions = ["s3:PutObject"]
 
-    resources = ["arn:aws:s3:::${aws_s3_bucket.alb_access_logs.bucket}/*"]
+    resources = ["arn:aws:s3:::${aws_s3_bucket.alb_logs.bucket}/*"]
   }
 
   statement {
@@ -60,7 +60,7 @@ data "aws_iam_policy_document" "alb_access_logs_policy" {
       values   = ["bucket-owner-full-control"]
     }
 
-    resources = ["arn:aws:s3:::${aws_s3_bucket.alb_access_logs.bucket}/*"]
+    resources = ["arn:aws:s3:::${aws_s3_bucket.alb_logs.bucket}/*"]
   }
 
   statement {
@@ -74,7 +74,7 @@ data "aws_iam_policy_document" "alb_access_logs_policy" {
 
     actions = ["s3:GetBucketAcl"]
 
-    resources = ["arn:aws:s3:::${aws_s3_bucket.alb_access_logs.bucket}"]
+    resources = ["arn:aws:s3:::${aws_s3_bucket.alb_logs.bucket}"]
   }
 
   statement {
@@ -88,6 +88,6 @@ data "aws_iam_policy_document" "alb_access_logs_policy" {
 
     actions = ["s3:PutObject"]
 
-    resources = ["arn:aws:s3:::${aws_s3_bucket.alb_access_logs.bucket}/*"]
+    resources = ["arn:aws:s3:::${aws_s3_bucket.alb_logs.bucket}/*"]
   }
 }

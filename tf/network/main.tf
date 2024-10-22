@@ -28,7 +28,7 @@ resource "aws_s3_bucket_policy" "alb_log_policy" {
 }
 
 resource "aws_s3_bucket_lifecycle_configuration" "website_logs" {
-  depends_on = [aws_s3_bucket.alb_logs]
+  depends_on = [ aws_s3_bucket_policy.alb_log_policy ]
   bucket     = aws_s3_bucket.alb_logs.id
   rule {
     status = "Enabled"
@@ -40,6 +40,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "website_logs" {
 }
 
 resource "aws_lb" "lb" {
+  depends_on = [ aws_s3_bucket_policy.alb_log_policy ]
+
   name               = "${var.project_name}-lb"
   internal           = true
   load_balancer_type = "application"

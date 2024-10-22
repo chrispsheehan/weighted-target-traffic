@@ -33,7 +33,13 @@ app.get(`/${basePath}/host`, (req, res) => {
 const server = awsServerlessExpress.createServer(app);
 
 exports.handler = (event, context) => {
-  awsServerlessExpress.proxy(server, event, context);
+    try {
+      awsServerlessExpress.proxy(server, event, context);
+    } catch (error) {
+      console.error(`Error in handler: ${error.message}`);
+      context.fail(`Internal Server Error: ${error.message}`);
+    }
 };
+  
 
 module.exports = app;

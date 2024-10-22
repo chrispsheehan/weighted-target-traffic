@@ -159,7 +159,7 @@ resource "aws_apigatewayv2_route" "this" {
 }
 
 resource "aws_cloudwatch_log_group" "api_gw_logs" {
-  name              = "/apigateway/${var.project_name}-${var.vpc_link_api_stage_name}-logs"
+  name              = "/aws/apigateway/${var.project_name}-${var.vpc_link_api_stage_name}-logs"
   retention_in_days = 1
 }
 

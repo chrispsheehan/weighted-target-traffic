@@ -37,6 +37,16 @@ resource "aws_iam_role_policy_attachment" "lambda_vpc_permissions_attach" {
   policy_arn = aws_iam_policy.lambda_vpc_permissions.arn
 }
 
+resource "aws_iam_policy" "lambda_logs_permissions" {
+  name   = "${var.lambda_bucket}-lambda-logs-permissions"
+  policy = data.aws_iam_policy_document.lambda_logs_permissions.json
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_vpc_permissions_attach" {
+  role       = aws_iam_role.iam_for_lambda.name
+  policy_arn = aws_iam_policy.lambda_logs_permissions.arn
+}
+
 resource "aws_lambda_function" "this" {
   function_name = local.lambda_name
   role          = aws_iam_role.iam_for_lambda.arn
@@ -58,6 +68,11 @@ resource "aws_lambda_function" "this" {
       BASE_PATH = "${var.vpc_link_api_stage_name}/lambda"
     }
   }
+}
+
+resource "aws_cloudwatch_log_group" "lambda_log_group" {
+  name              = "/aws/lambda/${aws_lambda_function.this.function_name}"
+  retention_in_days = 1
 }
 
 resource "aws_lb_target_group_attachment" "this" {

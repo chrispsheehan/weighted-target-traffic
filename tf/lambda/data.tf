@@ -38,3 +38,19 @@ data "aws_iam_policy_document" "lambda_vpc_permissions" {
     effect = "Allow"
   }
 }
+
+data "aws_iam_policy_document" "lambda_logs_permissions" {
+  statement {
+    actions = [
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+
+    resources = [
+      "${aws_cloudwatch_log_group.lambda_log_group.arn}",
+      "${aws_cloudwatch_log_group.lambda_log_group.arn}:*"
+    ]
+
+    effect = "Allow"
+  }
+}

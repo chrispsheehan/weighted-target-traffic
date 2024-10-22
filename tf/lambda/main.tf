@@ -50,7 +50,6 @@ resource "aws_lambda_function" "this" {
 
   environment {
     variables = {
-      PORT      = var.lambda_port
       BASE_PATH = "${var.vpc_link_api_stage_name}/lambda"
     }
   }

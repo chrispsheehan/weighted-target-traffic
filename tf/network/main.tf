@@ -73,6 +73,16 @@ resource "aws_lb_target_group" "lambda_tg" {
   protocol    = "HTTP"
   vpc_id      = data.aws_vpc.private.id
   target_type = "lambda"
+
+  health_check {
+    interval            = 10
+    path                = "${var.vpc_link_api_stage_name}/lambda/health"
+    protocol            = "HTTP"
+    matcher             = "200"
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+  }
 }
 
 resource "aws_lb_listener" "lambda_listener" {

@@ -47,7 +47,7 @@ resource "aws_lb_target_group" "ecs_tg" {
 
   health_check {
     interval            = 10
-    path                = "/health"
+    path                = local.ecs_healthcheck_path
     protocol            = "HTTP"
     matcher             = "200"
     timeout             = 5

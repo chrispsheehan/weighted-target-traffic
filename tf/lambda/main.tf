@@ -1,4 +1,6 @@
 resource "aws_security_group" "lambda_sg" {
+  depends_on = [aws_lambda_function.this]
+
   vpc_id = data.aws_vpc.private.id
   name   = "${var.project_name}-lambda-sg"
 
@@ -32,7 +34,6 @@ resource "aws_iam_role_policy_attachment" "lambda_vpc_permissions_attach" {
   role       = aws_iam_role.iam_for_lambda.name
   policy_arn = aws_iam_policy.lambda_vpc_permissions.arn
 }
-
 
 resource "aws_lambda_function" "this" {
   function_name = local.lambda_name

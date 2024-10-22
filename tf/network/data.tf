@@ -30,55 +30,6 @@ data "aws_iam_policy_document" "alb_access_logs_policy" {
   version = "2012-10-17"
 
   statement {
-    sid = "AllowELBRootAccount"
-    effect = "Allow"
-
-    principals {
-      type        = "AWS"
-      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
-    }
-
-    actions = ["s3:PutObject"]
-
-    resources = ["arn:aws:s3:::${aws_s3_bucket.alb_logs.bucket}/*"]
-  }
-
-  statement {
-    sid = "AWSLogDeliveryWrite"
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["delivery.logs.amazonaws.com"]
-    }
-
-    actions = ["s3:PutObject"]
-
-    condition {
-      test     = "StringEquals"
-      variable = "s3:x-amz-acl"
-      values   = ["bucket-owner-full-control"]
-    }
-
-    resources = ["arn:aws:s3:::${aws_s3_bucket.alb_logs.bucket}/*"]
-  }
-
-  statement {
-    sid = "AWSLogDeliveryAclCheck"
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = ["delivery.logs.amazonaws.com"]
-    }
-
-    actions = ["s3:GetBucketAcl"]
-
-    resources = ["arn:aws:s3:::${aws_s3_bucket.alb_logs.bucket}"]
-  }
-
-  statement {
-    sid = "AllowALBAccess"
     effect = "Allow"
 
     principals {
@@ -86,8 +37,43 @@ data "aws_iam_policy_document" "alb_access_logs_policy" {
       identifiers = ["elasticloadbalancing.amazonaws.com"]
     }
 
-    actions = ["s3:PutObject"]
+    actions = [
+      "s3:PutObject",
+      "s3:PutObjectAcl"
+    ]
 
-    resources = ["arn:aws:s3:::${aws_s3_bucket.alb_logs.bucket}/*"]
+    resources = [
+      "arn:aws:s3:::${aws_s3_bucket.alb_access_logs.bucket}/*"
+    ]
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceAccount"
+      values   = ["${data.aws_caller_identity.current.account_id}"]
+    }
+  }
+
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["delivery.logs.amazonaws.com"]
+    }
+
+    actions = [
+      "s3:PutObject",
+      "s3:PutObjectAcl"
+    ]
+
+    resources = [
+      "arn:aws:s3:::${aws_s3_bucket.alb_access_logs.bucket}/*"
+    ]
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceAccount"
+      values   = ["${data.aws_caller_identity.current.account_id}"]
+    }
   }
 }

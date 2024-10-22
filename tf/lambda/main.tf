@@ -68,6 +68,11 @@ resource "aws_lambda_function" "this" {
       BASE_PATH = "${var.vpc_link_api_stage_name}/lambda"
     }
   }
+
+  # Ignore network interface changes to prevent issues during destroy
+  lifecycle {
+    ignore_changes = [vpc_config]
+  }
 }
 
 resource "aws_cloudwatch_log_group" "lambda_log_group" {

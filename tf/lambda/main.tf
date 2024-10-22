@@ -43,6 +43,8 @@ resource "aws_lambda_function" "this" {
   s3_bucket = var.lambda_bucket
   s3_key    = var.lambda_zip
 
+  timeout = 10
+
   vpc_config {
     subnet_ids         = data.aws_subnets.private.ids
     security_group_ids = [aws_security_group.lambda_sg.id]

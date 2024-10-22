@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TF_VAR_lambda_zip: not_exists.zip
+      TF_VAR_lb_listener_arn: arn:aws:elasticloadbalancing:eu-west-2:123456789012:listener/app/my-load-balancer/50dc6c495c0c9188/a6c72cd8d5cd4c43
       TF_VAR_lambda_bucket: not_exists
     steps:
       - uses: actions/checkout@v4

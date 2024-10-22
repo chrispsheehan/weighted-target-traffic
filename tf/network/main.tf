@@ -50,6 +50,12 @@ resource "aws_lb" "lb" {
   subnets         = data.aws_subnets.private.ids
 
   enable_cross_zone_load_balancing = true
+
+  access_logs {
+    bucket  = aws_s3_bucket.alb_logs.bucket
+    prefix  = "load-balancer-logs/"
+    enabled = true
+  }
 }
 
 resource "aws_lb_target_group" "ecs_tg" {

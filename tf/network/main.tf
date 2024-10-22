@@ -40,7 +40,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "website_logs" {
 }
 
 resource "aws_lb" "lb" {
-  depends_on = [ aws_s3_bucket_policy.alb_log_policy ]
+  depends_on = [ aws_s3_bucket_lifecycle_configuration.website_logs ]
 
   name               = "${var.project_name}-lb"
   internal           = true

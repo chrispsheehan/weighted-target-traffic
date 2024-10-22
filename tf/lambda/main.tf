@@ -19,18 +19,8 @@ resource "aws_security_group" "lambda_sg" {
 
   lifecycle {
     create_before_destroy = true
+    prevent_destroy       = true
   }
-}
-
-resource "null_resource" "cleanup_enis" {
-  provisioner "local-exec" {
-    command = "aws ec2 describe-network-interfaces --filters Name=group-id,Values=${aws_security_group.lambda_sg.id} --region ${var.region} | jq -r '.NetworkInterfaces[].NetworkInterfaceId' | xargs -I {} aws ec2 delete-network-interface --network-interface-id {} --region ${var.region}"
-  }
-
-  depends_on = [
-    aws_lambda_function.this,
-    aws_lb_target_group_attachment.this
-  ]
 }
 
 resource "aws_iam_role" "iam_for_lambda" {

@@ -43,8 +43,7 @@ runs:
       name: Set variables
       shell: bash
       run: |
-        echo "S3_TAG=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
-        echo "NEW_FILE_KEY=$S3_TAG.zip" >> $GITHUB_ENV
+        echo "NEW_FILE_KEY=$(echo $GITHUB_SHA | cut -c 1-6).zip" >> $GITHUB_ENV
 
     - if: env.SHOULD_BUILD == 'true'
       name: install

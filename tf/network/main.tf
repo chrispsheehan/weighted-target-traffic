@@ -28,12 +28,6 @@ resource "aws_lb" "lb" {
   subnets         = data.aws_subnets.private.ids
 
   enable_cross_zone_load_balancing = true
-
-  access_logs {
-    bucket  = aws_s3_bucket.alb_access_logs.bucket
-    prefix  = "logs"
-    enabled = true
-  }
 }
 
 resource "aws_lb_target_group" "ecs_tg" {
@@ -61,8 +55,13 @@ resource "aws_lb_listener" "ecs_lambda_listener" {
   protocol          = "HTTP"
 
   default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.ecs_tg.arn
+    type = "fixed-response"
+
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "Error: ALB Resource not found"
+      status_code  = "404"
+    }
   }
 }
 
@@ -77,7 +76,7 @@ resource "aws_lb_listener_rule" "lambda_rule" {
 
   condition {
     path_pattern {
-      values = ["/lambda/*"]
+      values = ["/${var.vpc_link_api_stage_name}/lambda/*"]
     }
   }
 }
@@ -93,11 +92,10 @@ resource "aws_lb_listener_rule" "ecs_rule" {
 
   condition {
     path_pattern {
-      values = ["/ecs/*"]
+      values = ["/${var.vpc_link_api_stage_name}/ecs/*"]
     }
   }
 }
-
 
 resource "aws_lb_target_group" "lambda_tg" {
   name        = "lambda-tg"
@@ -147,27 +145,17 @@ resource "aws_apigatewayv2_api" "this" {
   protocol_type = "HTTP"
 }
 
-resource "aws_apigatewayv2_integration" "this" {
-  api_id             = aws_apigatewayv2_api.this.id
-  integration_type   = "HTTP_PROXY"
-  connection_type    = "VPC_LINK"
-  connection_id      = aws_apigatewayv2_vpc_link.this.id
+resource "aws_apigatewayv2_integration" "alb_integration" {
+  api_id           = aws_apigatewayv2_api.this.id
+  integration_type = "HTTP_PROXY"
+  integration_uri  = aws_lb.lb.dns_name
   integration_method = "ANY"
-  integration_uri    = aws_lb_listener.ecs_lambda_listener.arn
-
-  payload_format_version = "1.0"
 }
 
-resource "aws_apigatewayv2_route" "ecs_route" {
+resource "aws_apigatewayv2_route" "api_route" {
   api_id    = aws_apigatewayv2_api.this.id
-  route_key = "ANY /ecs/{proxy+}"
-  target    = "integrations/${aws_apigatewayv2_integration.this.id}"
-}
-
-resource "aws_apigatewayv2_route" "lambda_route" {
-  api_id    = aws_apigatewayv2_api.this.id
-  route_key = "ANY /lambda/{proxy+}"
-  target    = "integrations/${aws_apigatewayv2_integration.this.id}"
+  route_key = "ANY /{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.alb_integration.id}"
 }
 
 resource "aws_cloudwatch_log_group" "api_gw_logs" {

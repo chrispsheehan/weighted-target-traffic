@@ -64,6 +64,11 @@ resource "aws_lambda_function" "this" {
       BASE_PATH = "${var.vpc_link_api_stage_name}/lambda"
     }
   }
+
+  lifecycle {
+    prevent_destroy = false
+    create_before_destroy = true # This ensures the SG isn't removed before ENIs are detached
+  }
 }
 
 resource "aws_cloudwatch_log_group" "lambda_log_group" {

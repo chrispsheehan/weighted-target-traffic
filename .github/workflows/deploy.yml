@@ -100,7 +100,7 @@ jobs:
       lambda_zip: ${{ github.sha }}-${{ github.run_id }}.zip
       lambda_bucket: ${{ needs.repo.outputs.lambda_code_bucket }}
     outputs:
-      lambda_zip: ${{ steps.set-lambda-zip.outputs.lambda_zip }}
+      lambda_zip: ${{ steps.set-s3-key.outputs.s3_file_key }}
     steps:
       - uses: actions/checkout@v4
       - uses: aws-actions/configure-aws-credentials@v4
@@ -109,27 +109,17 @@ jobs:
           role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
           role-session-name: GitHubActions
 
-      - name: install
-        shell: bash
-        run: |  
-          npm install
-          cp -r ${{ github.workspace }}/node_modules ${{ github.workspace }}/src/node_modules
+      - name: Build and push detected changes
+        id: build-lambda
+        uses: ./.github/actions/build_lambda
+        with:
+          aws_region: ${{ vars.aws_region }}
+          bucket_name: ${{ env.lambda_bucket }}
 
-      - name: zip
-        shell: bash
+      - name: Set s3 key output
+        id: set-s3-key
         run: |
-          cd src
-          rm app.js
-          zip -r ${{ env.lambda_zip }} *
-
-      - name: upload
-        shell: bash
-        run: |
-          aws s3 cp src/${{ env.lambda_zip }} s3://${{ env.lambda_bucket }}/${{ env.lambda_zip }}
-
-      - id: set-lambda-zip
-        run: |
-          echo "lambda_zip=${{ env.lambda_zip }}" >> $GITHUB_OUTPUT
+          echo "s3_file_key=${{ env.FILE_KEY }}" >> $GITHUB_OUTPUT
 
   network:
     runs-on: ubuntu-latest

@@ -148,7 +148,7 @@ resource "aws_apigatewayv2_api" "this" {
 resource "aws_apigatewayv2_integration" "alb_integration" {
   api_id           = aws_apigatewayv2_api.this.id
   integration_type = "HTTP_PROXY"
-  integration_uri  = aws_lb.lb.dns_name
+  integration_uri  = "http://${aws_lb.lb.dns_name}"
   integration_method = "ANY"
 }
 

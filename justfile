@@ -19,3 +19,10 @@ tf dir op:
     cd tf/{{dir}}
     terraform init
     terraform {{op}} -var-file="{{justfile_directory()}}/variables.tfvars"
+
+detach-function function_name:
+    #!/bin/bash
+    aws lambda update-function-configuration --function-name {{function_name}} --vpc-config "SubnetIds=[],SecurityGroupIds=[]" --region $AWS_REGION
+    aws lambda get-function-configuration --function-name {{function_name}} --query "VpcConfig" --region $AWS_REGION
+
+

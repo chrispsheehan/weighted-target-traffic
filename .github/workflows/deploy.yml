@@ -10,6 +10,9 @@ permissions:
   id-token: write
   contents: read
 
+env:
+  TF_VAR_project_name: ${{ github.event.repository.name }}
+
 jobs:
   validate:
     runs-on: ubuntu-latest

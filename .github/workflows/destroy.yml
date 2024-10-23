@@ -8,6 +8,7 @@ permissions:
   contents: read
 
 env:
+  TF_VAR_project_name: ${{ github.event.repository.name }}
   TF_VAR_lb_target_group_arn: "arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/dummy-target-group/1234567890123456"
   TF_VAR_ecr_repo_name: ${{ vars.aws_account_id }}-weighted-target-ecs
   TF_VAR_lb_security_group_id: "sg-0123456789abcdef0"
@@ -73,12 +74,20 @@ jobs:
       - lambda
     steps:
       - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v2
       - uses: hashicorp/setup-terraform@v3
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ vars.aws_region }}
           role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
           role-session-name: GitHubActions
+
+      - name: Detach VPC config from lambda
+        env:
+          AWS_REGION: ${{ vars.aws_region }}
+        shell: bash
+        run: |
+          just detach-function ${{ env.TF_VAR_project_name }}
 
       - name: Init
         shell: bash

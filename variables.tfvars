@@ -1,4 +1,3 @@
-project_name            = "weighted-target-traffic"
 private_vpc_name        = "ecs-private-vpc"
 region                  = "eu-west-2"
 vpc_link_api_stage_name = "dev"

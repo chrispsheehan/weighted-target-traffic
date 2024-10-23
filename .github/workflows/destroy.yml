@@ -29,6 +29,13 @@ jobs:
           role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
           role-session-name: GitHubActions
 
+      - name: Detach VPC config from lambda
+        env:
+          AWS_REGION: ${{ vars.aws_region }}
+        shell: bash
+        run: |
+          just detach-function ${{ env.TF_VAR_project_name }}
+
       - name: Init
         shell: bash
         run: |
@@ -53,15 +60,7 @@ jobs:
         with:
           aws-region: ${{ vars.aws_region }}
           role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
-          role-session-name: GitHubActions
-
-      - name: Detach VPC config from lambda
-        env:
-          AWS_REGION: ${{ vars.aws_region }}
-        shell: bash
-        run: |
-          just detach-function ${{ env.TF_VAR_project_name }}
-  
+          role-session-name: GitHubActions  
 
       - name: Init
         shell: bash

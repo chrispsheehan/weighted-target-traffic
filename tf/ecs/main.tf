@@ -84,7 +84,7 @@ resource "aws_ecs_service" "ecs" {
   cluster               = aws_ecs_cluster.cluster.id
   task_definition       = aws_ecs_task_definition.task.arn
   desired_count         = var.initial_task_count
-  wait_for_steady_state = false # rm this later
+  wait_for_steady_state = true
 
   deployment_circuit_breaker {
     enable   = true

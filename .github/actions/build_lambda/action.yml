@@ -24,7 +24,12 @@ runs:
       shell: bash
       run: |
         FILE_COUNT=$(aws s3api list-objects --bucket "${{ inputs.bucket_name }}" --region "${{ inputs.aws_region }}" --query "Contents[].Key" --output text | wc -l)
-        echo File count: "$FILE_COUNT"
+        if [[ -z "$FILE_COUNT" || "$FILE_COUNT" -eq 0 ]]; then
+          echo "No files found in the bucket."
+          FILE_COUNT=0  # Assign a default value (0) to FILE_COUNT if empty or null
+        else
+          echo "Files found: $FILE_COUNT"
+        fi
         if [[ "${{ steps.changes.outputs.src }}" == "true" || "$FILE_COUNT" -eq 0 ]]; then
           echo "Either src changed or S3 is empty"
           echo "SHOULD_BUILD=true" >> $GITHUB_ENV

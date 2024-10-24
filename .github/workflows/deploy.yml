@@ -3,20 +3,41 @@ name: Deploy
 on:
   push:
     branches:
-      - main
+      - api-routes
   workflow_dispatch:
 
 permissions:
   id-token: write
   contents: read
 
+env:
+  TF_VAR_project_name: ${{ github.event.repository.name }}
+
 jobs:
-  ecr:
+  validate:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v2
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.aws_region }}
+          role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
+          role-session-name: GitHubActions
+
+      - name: Set image_uri output
+        shell: bash
+        run: just validate
+
+  repo:
+    runs-on: ubuntu-latest
+    needs: validate
     env:
       TF_VAR_ecr_repo_name: ${{ vars.aws_account_id }}-weighted-target-ecs
+      TF_VAR_lambda_code_bucket_name: ${{ vars.aws_account_id }}-weighted-target-lambda-code
     outputs:
       ecr_repo_name: ${{ steps.set-envs.outputs.ECR_REPO_NAME }}
+      lambda_code_bucket: ${{ steps.set-envs.outputs.LAMBDA_CODE_BUCKET }}
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
@@ -29,27 +50,29 @@ jobs:
       - name: Init
         shell: bash
         run: |
-          cd tf/ecr
+          cd tf/repo
           terraform init
     
       - name: Deploy
         shell: bash
         id: deploy
         run: |
-          cd tf/ecr
+          cd tf/repo
           terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars
 
       - name: Set env vars
         id: set-envs
         shell: bash
         run: |
-          cd tf/ecr
-          ECR_REPO_NAME=$(terraform output -raw repo_name)
+          cd tf/repo
+          ECR_REPO_NAME=$(terraform output -raw ecr_repo_name)
+          LAMBDA_CODE_BUCKET=$(terraform output -raw lambda_code_bucket)
           echo "ECR_REPO_NAME=$ECR_REPO_NAME" >> $GITHUB_OUTPUT
+          echo "LAMBDA_CODE_BUCKET=$LAMBDA_CODE_BUCKET" >> $GITHUB_OUTPUT
 
   image:
     runs-on: ubuntu-latest
-    needs: ecr
+    needs: repo
     outputs:
       image_uri: ${{ steps.set-image-uri.outputs.image_uri }}
     steps:
@@ -66,18 +89,48 @@ jobs:
         with:
           aws_account_id: ${{ vars.aws_account_id }}
           aws_region: ${{ vars.aws_region }}
-          ecr_repository_name: ${{ needs.ecr.outputs.ecr_repo_name }}
+          ecr_repository_name: ${{ needs.repo.outputs.ecr_repo_name }}
 
       - name: Set image_uri output
         id: set-image-uri
         run: |
           echo "image_uri=${{ env.IMAGE_URI }}" >> $GITHUB_OUTPUT
 
+  code:
+    runs-on: ubuntu-latest
+    needs: repo
+    env:
+      lambda_zip: ${{ github.sha }}-${{ github.run_id }}.zip
+      lambda_bucket: ${{ needs.repo.outputs.lambda_code_bucket }}
+    outputs:
+      lambda_zip: ${{ steps.set-s3-key.outputs.s3_file_key }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.aws_region }}
+          role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
+          role-session-name: GitHubActions
+
+      - name: Build and push detected changes
+        id: build-lambda
+        uses: ./.github/actions/build_lambda
+        with:
+          aws_region: ${{ vars.aws_region }}
+          bucket_name: ${{ env.lambda_bucket }}
+
+      - name: Set s3 key output
+        id: set-s3-key
+        run: |
+          echo "s3_file_key=${{ env.FILE_KEY }}" >> $GITHUB_OUTPUT
+
   network:
     runs-on: ubuntu-latest
+    needs: validate
     outputs:
       lb_security_group_id: ${{ steps.set-envs.outputs.LB_SECURITY_GROUP_ID }}
       lb_ecs_target_group_arn: ${{ steps.set-envs.outputs.LB_ECS_TARGET_GROUP_ARN }}
+      lb_lambda_target_group_arn: ${{ steps.set-envs.outputs.LB_LAMBDA_TARGET_GROUP_ARN }}
       api_invoke_url: ${{ steps.set-envs.outputs.API_INVOKE_URL }}
     steps:
       - uses: actions/checkout@v4
@@ -109,18 +162,20 @@ jobs:
           LB_SECURITY_GROUP_ID=$(terraform output -raw lb_security_group_id)
           API_INVOKE_URL=$(terraform output -raw api_invoke_url)
           LB_ECS_TARGET_GROUP_ARN=$(terraform output -raw lb_ecs_target_group_arn)
+          LB_LAMBDA_TARGET_GROUP_ARN=$(terraform output -raw lb_lambda_target_group_arn)
           echo "LB_SECURITY_GROUP_ID=$LB_SECURITY_GROUP_ID" >> $GITHUB_OUTPUT
           echo "API_INVOKE_URL=$API_INVOKE_URL" >> $GITHUB_OUTPUT
           echo "LB_ECS_TARGET_GROUP_ARN=$LB_ECS_TARGET_GROUP_ARN" >> $GITHUB_OUTPUT
+          echo "LB_LAMBDA_TARGET_GROUP_ARN=$LB_LAMBDA_TARGET_GROUP_ARN" >> $GITHUB_OUTPUT
 
   ecs:
     needs:
-      - ecr
+      - repo
       - image
       - network
     runs-on: ubuntu-latest
     env:
-      TF_VAR_ecr_repo_name: ${{ needs.ecr.outputs.ecr_repo_name }}
+      TF_VAR_ecr_repo_name: ${{ needs.repo.outputs.ecr_repo_name }}
       TF_VAR_ecs_image_uri: ${{ needs.image.outputs.image_uri }}
       TF_VAR_lb_security_group_id: ${{ needs.network.outputs.lb_security_group_id }}
       TF_VAR_lb_target_group_arn: ${{ needs.network.outputs.lb_ecs_target_group_arn}}
@@ -144,4 +199,113 @@ jobs:
         id: deploy
         run: |
           cd tf/ecs
-          terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars -replace=aws_lb_listener.ecs_listener
+          terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars
+
+  lambda:
+    needs: 
+      - repo
+      - code
+      - network
+    runs-on: ubuntu-latest
+    env:
+      TF_VAR_lambda_zip: ${{ needs.code.outputs.lambda_zip }}
+      TF_VAR_lambda_bucket: ${{ needs.repo.outputs.lambda_code_bucket }}
+      TF_VAR_lb_security_group_id: ${{ needs.network.outputs.lb_security_group_id }}
+      TF_VAR_lb_target_group_arn: ${{ needs.network.outputs.lb_lambda_target_group_arn}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.aws_region }}
+          role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
+          role-session-name: GitHubActions
+
+      - name: Init
+        shell: bash
+        run: |
+          cd tf/lambda
+          terraform init
+        
+      - name: Deploy
+        shell: bash
+        id: deploy
+        run: |
+          cd tf/lambda
+          terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars
+
+  ecs_test:
+    runs-on: ubuntu-latest
+    needs:
+      - network
+      - ecs
+    steps:
+      - name: url
+        run: echo ${{ needs.network.outputs.api_invoke_url}}/ecs/host      
+      - name: Assert API response contains expected fields
+        run: |
+          RESPONSE=$(curl -s ${{ needs.network.outputs.api_invoke_url}}/ecs/host)
+          echo "$RESPONSE" | jq
+
+          MESSAGE=$(echo "$RESPONSE" | jq -r '.message')
+          HOSTNAME=$(echo "$RESPONSE" | jq -r '.hostname')
+          BACKEND=$(echo "$RESPONSE" | jq -r '.backend')
+
+          if [[ "$MESSAGE" == "null" || "$HOSTNAME" == "null" || "$BACKEND" == "null" ]]; then
+            echo "Error: Response does not contain expected fields."
+            exit 1
+          elif [[ "$BACKEND" != "ecs" ]]; then
+            echo "Error: Backend is not 'ecs'. Found '$BACKEND'."
+            exit 1
+          else
+            echo "API response contains all expected fields and backend is 'ecs'."
+          fi
+    
+  lambda_test:
+    runs-on: ubuntu-latest
+    needs:
+      - network
+      - lambda
+    steps:
+      - name: url
+        run: echo ${{ needs.network.outputs.api_invoke_url}}/lambda/host
+      - name: warm-up lambda
+        run: |
+          curl -s ${{ needs.network.outputs.api_invoke_url}}/lambda/host
+          sleep 10
+      - name: Assert API response contains expected fields
+        run: |
+          RESPONSE=$(curl -s ${{ needs.network.outputs.api_invoke_url}}/lambda/host)
+          echo "$RESPONSE" | jq
+
+          MESSAGE=$(echo "$RESPONSE" | jq -r '.message')
+          HOSTNAME=$(echo "$RESPONSE" | jq -r '.hostname')
+          BACKEND=$(echo "$RESPONSE" | jq -r '.backend')
+
+          if [[ "$MESSAGE" == "null" || "$HOSTNAME" == "null" || "$BACKEND" == "null" ]]; then
+            echo "Error: Response does not contain expected fields."
+            exit 1
+          elif [[ "$BACKEND" != "lambda" ]]; then
+            echo "Error: Backend is not 'lambda'. Found '$BACKEND'."
+            exit 1
+          else
+            echo "API response contains all expected fields and backend is 'lambda'."
+          fi
+
+  negative_test:
+    runs-on: ubuntu-latest
+    needs:
+      - network
+      - lambda
+      - ecs
+    steps:
+      - name: Negative test for 404 response
+        run: |
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" ${{ needs.network.outputs.api_invoke_url}}/no/exists/)
+          
+          # Check if the response status code is 404
+          if [[ "$RESPONSE" -ne 404 ]]; then
+            echo "Error: Expected 404 response, but got $RESPONSE."
+            exit 1
+          else
+            echo "Negative test passed: Received expected 404 response."
+          fi

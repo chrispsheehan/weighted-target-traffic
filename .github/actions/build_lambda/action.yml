@@ -1,0 +1,77 @@
+name: Build and push lambda code to S3
+description: Pushes lambda code to S3 when changes are detected in the source code.
+
+inputs:
+  aws_region:
+    description: 'ECR aws region'
+    required: true
+  bucket_name:
+    description: 'ECR repo name'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: dorny/paths-filter@v3
+      id: changes
+      with:
+        filters: |
+          src:
+            - 'src/**'
+      
+    - name: Check if S3 repository is empty
+      id: check_should_build
+      shell: bash
+      run: |
+        FILE_COUNT=$(aws s3api list-objects --bucket "${{ inputs.bucket_name }}" --region "${{ inputs.aws_region }}" --query "Contents[].Key" --output text | wc -l)
+        echo File count: "$FILE_COUNT"
+        if [[ "${{ steps.changes.outputs.src }}" == "true" || "$IMAGE_COUNT" -eq 0 ]]; then
+          echo "Either src changed or S3 is empty"
+          echo "SHOULD_BUILD=true" >> $GITHUB_ENV
+        else
+          echo "Neither src changed nor S3 is empty"
+          echo "SHOULD_BUILD=false" >> $GITHUB_ENV
+        fi
+
+    - if: env.SHOULD_BUILD == 'true'
+      name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - if: env.SHOULD_BUILD == 'true'
+      name: Set variables
+      shell: bash
+      run: |
+        echo "NEW_FILE_KEY=$(echo $GITHUB_SHA | cut -c 1-6).zip" >> $GITHUB_ENV
+
+    - if: env.SHOULD_BUILD == 'true'
+      name: install
+      shell: bash
+      run: |  
+        npm install
+        cp -r ${{ github.workspace }}/node_modules ${{ github.workspace }}/src/node_modules
+
+    - if: env.SHOULD_BUILD == 'true'
+      name: zip
+      shell: bash
+      run: |
+        cd src
+        rm app.js
+        zip -r $NEW_FILE_KEY *
+
+    - if: env.SHOULD_BUILD == 'true'
+      name: upload
+      shell: bash
+      run: |
+        aws s3 cp src/$NEW_FILE_KEY s3://${{ inputs.bucket_name }}/$NEW_FILE_KEY
+        echo "NEW file key is $NEW_FILE_KEY"
+        echo "FILE_KEY=$NEW_FILE_KEY" >> $GITHUB_ENV
+
+    - if: env.SHOULD_BUILD != 'true'
+      name: Get Latest S3 file key
+      shell: bash
+      run: |
+        LATEST_FILE_KEY=$(aws s3api list-objects --bucket "${{ inputs.bucket_name }}" --region "${{ inputs.aws_region }}" --query 'Contents | sort_by(@, &LastModified)[-1].Key' --output text)
+        echo "EXISTING file key is $LATEST_FILE_KEY"
+        echo "FILE_KEY=$LATEST_FILE_KEY" >> $GITHUB_ENV

@@ -1,3 +1,8 @@
+resource "aws_s3_bucket" "lambda_bucket" {
+  bucket        = var.lambda_code_bucket_name
+  force_destroy = true
+}
+
 resource "aws_security_group" "vpc_endpoint" {
   name        = "${var.ecr_repo_name}-vpc-endpoint-sg"
   description = "Security group for VPC endpoints"

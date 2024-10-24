@@ -35,7 +35,7 @@ resource "aws_iam_role_policy_attachment" "tg_access_policy_attachment" {
 
 resource "aws_cloudwatch_log_group" "ecs_log_group" {
   name              = local.cloudwatch_log_name
-  retention_in_days = 1
+  retention_in_days = var.log_retention_days
 }
 
 resource "aws_ecs_task_definition" "task" {
@@ -84,7 +84,7 @@ resource "aws_ecs_service" "ecs" {
   cluster               = aws_ecs_cluster.cluster.id
   task_definition       = aws_ecs_task_definition.task.arn
   desired_count         = var.initial_task_count
-  wait_for_steady_state = false # rm this later
+  wait_for_steady_state = true
 
   deployment_circuit_breaker {
     enable   = true

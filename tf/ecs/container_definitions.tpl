@@ -16,7 +16,7 @@
         "healthcheck": {
             "command": [
                 "CMD-SHELL", 
-                "wget --quiet --spider --tries=1 http://localhost:${container_port}/health || exit 1"
+                "wget --quiet --spider --tries=1 http://localhost:${container_port}/${base_path}/health || exit 1"
             ],
             "interval": 5,
             "retries": 1,

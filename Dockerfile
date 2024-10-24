@@ -9,6 +9,6 @@ EXPOSE 3000
 
 COPY ./package.json ./
 RUN npm install
-COPY ./src/app.js ./app.js
+COPY ./src ./
 
 CMD ["node", "app.js"]

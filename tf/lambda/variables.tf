@@ -14,16 +14,24 @@ variable "vpc_link_api_stage_name" {
   type = string
 }
 
+variable "log_retention_days" {
+  type = number
+}
+
 ###############################
 ### dynamic variables below ###
 ################################
 
-variable "lambda_zip_path" {
+variable "lambda_bucket" {
+  type = string
+}
+
+variable "lambda_zip" {
   type        = string
   description = "Lambda code (zipped) to be deployed"
 }
 
-variable "load_balancer_arn" {
+variable "lb_target_group_arn" {
   type = string
 }
 

@@ -238,9 +238,12 @@ jobs:
     needs:
       - network
       - ecs
+      - lambda
     steps:
       - name: url
-        run: echo ${{ needs.network.outputs.api_invoke_url}}/host      
+        run: echo ${{ needs.network.outputs.api_invoke_url}}/host
+      - name: sleep
+        run: sleep 60
       - name: Hit the /host endpoint 10 times and assert backend distribution
         run: |
           LAMBDA_COUNT=0
@@ -249,6 +252,7 @@ jobs:
           # Loop to hit the endpoint 10 times
           for i in {1..10}; do
             RESPONSE=$(curl -s ${{ needs.network.outputs.api_invoke_url}}/host)
+            echo "$RESPONSE" | jq
             BACKEND=$(echo "$RESPONSE" | jq -r '.backend')
 
             # Check if the backend field exists
@@ -273,7 +277,7 @@ jobs:
           # Assert that lambda was hit 9 times and ecs was hit 1 time
           if [[ "$LAMBDA_COUNT" -eq 9 && "$ECS_COUNT" -eq 1 ]]; then
             echo "Test passed: lambda was backend 9 times and ecs was backend 1 time."
-          else  
+          else
             exit 1
           fi
     

@@ -5,7 +5,9 @@ const os = require('os');
 const app = express();
 app.use(express.json());
 
-const basePath = process.env.BASE_PATH || "";
+const stage = process.env.STAGE || "";
+const backend = process.env.BACKEND || "";
+const basePath = `${stage}/${backend}`
 
 console.log(`App starting with BASE_PATH: ${basePath}`);
 
@@ -18,7 +20,7 @@ app.get(`/${basePath}/health`, (req, res) => {
   res.status(200).json({ msg: "Hello, this is your API" });
 });
 
-app.get(`/${basePath}/host`, (req, res) => {
+app.get(`/${stage}/host`, (req, res) => {
   const hostname = os.hostname();
   const currentTime = new Date().toISOString();
 

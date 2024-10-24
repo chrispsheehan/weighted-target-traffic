@@ -65,37 +65,33 @@ resource "aws_lb_listener" "ecs_lambda_listener" {
   }
 }
 
-resource "aws_lb_listener_rule" "lambda_rule" {
+resource "aws_lb_listener_rule" "weighted_rule" {
   listener_arn = aws_lb_listener.ecs_lambda_listener.arn
   priority     = 100
 
   action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.lambda_tg.arn
+    type = "forward"
+
+    forward {
+      target_group {
+        arn    = aws_lb_target_group.ecs_tg.arn
+        weight = 10  # 10% traffic to ECS
+      }
+
+      target_group {
+        arn    = aws_lb_target_group.lambda_tg.arn
+        weight = 90  # 90% traffic to Lambda
+      }
+    }
   }
 
   condition {
     path_pattern {
-      values = ["/${var.vpc_link_api_stage_name}/lambda/*"]
+      values = ["/${var.vpc_link_api_stage_name}/*"]
     }
   }
 }
 
-resource "aws_lb_listener_rule" "ecs_rule" {
-  listener_arn = aws_lb_listener.ecs_lambda_listener.arn
-  priority     = 200
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.ecs_tg.arn
-  }
-
-  condition {
-    path_pattern {
-      values = ["/${var.vpc_link_api_stage_name}/ecs/*"]
-    }
-  }
-}
 
 resource "aws_lb_target_group" "lambda_tg" {
   name        = "lambda-tg"

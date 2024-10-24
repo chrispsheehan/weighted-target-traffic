@@ -233,17 +233,77 @@ jobs:
           cd tf/lambda
           terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars
 
-
-  test:
+  ecs_test:
     runs-on: ubuntu-latest
     needs:
       - network
       - lambda
       - ecs
     steps:
-      - name: ecs
-        run: echo ${{ needs.network.outputs.api_invoke_url}}/ecs/host
-      - name: lambda
-        run: echo ${{ needs.network.outputs.api_invoke_url}}/lambda/host    
+      - name: url
+        run: echo ${{ needs.network.outputs.api_invoke_url}}/ecs/host      
+      - name: Assert API response contains expected fields
+        run: |
+          RESPONSE=$(curl -s ${{ needs.network.outputs.api_invoke_url}}/ecs/host)
+          echo "$RESPONSE" | jq
 
+          MESSAGE=$(echo "$RESPONSE" | jq -r '.message')
+          HOSTNAME=$(echo "$RESPONSE" | jq -r '.hostname')
+          BACKEND=$(echo "$RESPONSE" | jq -r '.backend')
+
+          if [[ "$MESSAGE" == "null" || "$HOSTNAME" == "null" || "$BACKEND" == "null" ]]; then
+            echo "Error: Response does not contain expected fields."
+            exit 1
+          elif [[ "$BACKEND" != "ecs" ]]; then
+            echo "Error: Backend is not 'ecs'. Found '$BACKEND'."
+            exit 1
+          else
+            echo "API response contains all expected fields and backend is 'ecs'."
+          fi
     
+  lambda_test:
+    runs-on: ubuntu-latest
+    needs:
+      - network
+      - lambda
+      - ecs
+    steps:
+      - name: url
+        run: echo ${{ needs.network.outputs.api_invoke_url}}/lambda/host
+      - name: Assert API response contains expected fields
+        run: |
+          RESPONSE=$(curl -s ${{ needs.network.outputs.api_invoke_url}}/lambda/host)
+          echo "$RESPONSE" | jq
+
+          MESSAGE=$(echo "$RESPONSE" | jq -r '.message')
+          HOSTNAME=$(echo "$RESPONSE" | jq -r '.hostname')
+          BACKEND=$(echo "$RESPONSE" | jq -r '.backend')
+
+          if [[ "$MESSAGE" == "null" || "$HOSTNAME" == "null" || "$BACKEND" == "null" ]]; then
+            echo "Error: Response does not contain expected fields."
+            exit 1
+          elif [[ "$BACKEND" != "lambda" ]]; then
+            echo "Error: Backend is not 'lambda'. Found '$BACKEND'."
+            exit 1
+          else
+            echo "API response contains all expected fields and backend is 'lambda'."
+          fi
+
+  negative_test:
+    runs-on: ubuntu-latest
+    needs:
+      - network
+      - lambda
+      - ecs
+    steps:
+      - name: Negative test for 404 response
+        run: |
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" ${{ needs.network.outputs.api_invoke_url}}/no/exists/)
+          
+          # Check if the response status code is 404
+          if [[ "$RESPONSE" -ne 404 ]]; then
+            echo "Error: Expected 404 response, but got $RESPONSE."
+            exit 1
+          else
+            echo "Negative test passed: Received expected 404 response."
+          fi

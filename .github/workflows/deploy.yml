@@ -238,6 +238,7 @@ jobs:
     needs:
       - network
       - ecs
+      - lambda
     steps:
       - name: url
         run: echo ${{ needs.network.outputs.api_invoke_url}}/host 

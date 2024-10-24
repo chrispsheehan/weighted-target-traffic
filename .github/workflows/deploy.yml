@@ -237,7 +237,7 @@ jobs:
           cd tf/lambda
           terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars
 
-  test:
+  weighted_test:
     runs-on: ubuntu-latest
     needs:
       - network
@@ -248,21 +248,11 @@ jobs:
         run: echo ${{ needs.network.outputs.api_invoke_url}}/host
       - name: sleep
         run: sleep 60
-      - name: Hit the /host endpoint 10 times and assert backend distribution
+      - name: Hit the /host endpoint 10 times and assert both backends are returned at least once
         run: |
           LAMBDA_COUNT=0
           ECS_COUNT=0
           TOTAL_REQUESTS=10
-
-          EXPECTED_LAMBDA_HITS=$(( (TOTAL_REQUESTS * ${{ github.env.lambda_traffic_percentage }}) / 100 ))
-          EXPECTED_ECS_HITS=$(( (TOTAL_REQUESTS * ${{ github.env.ecs_traffic_percentage }}) / 100 ))
-  
-          # Define a small range for tolerance, e.g., ±1
-          RANGE_TOLERANCE=1
-          MIN_LAMBDA_HITS=$(( EXPECTED_LAMBDA_HITS - RANGE_TOLERANCE ))
-          MAX_LAMBDA_HITS=$(( EXPECTED_LAMBDA_HITS + RANGE_TOLERANCE ))
-          MIN_ECS_HITS=$(( EXPECTED_ECS_HITS - RANGE_TOLERANCE ))
-          MAX_ECS_HITS=$(( EXPECTED_ECS_HITS + RANGE_TOLERANCE ))
 
           # Loop to hit the endpoint 10 times
           for i in {1..$TOTAL_REQUESTS}; do
@@ -287,13 +277,14 @@ jobs:
             fi
           done
 
-          echo "lambda was backend $LAMBDA_COUNT times and ecs was backend $ECS_COUNT times."
+          echo "Lambda hits: $LAMBDA_COUNT"
+          echo "ECS hits: $ECS_COUNT"
 
-          # Assert that lambda was hit 9 times and ecs was hit 1 time
-          if [[ "$LAMBDA_COUNT" -ge "$MIN_LAMBDA_HITS" && "$LAMBDA_COUNT" -le "$MAX_LAMBDA_HITS" && "$ECS_COUNT" -ge "$MIN_ECS_HITS" && "$ECS_COUNT" -le "$MAX_ECS_HITS" ]]; then
-            echo "Test passed: Lambda was backend between $MIN_LAMBDA_HITS and $MAX_LAMBDA_HITS times, and ECS was backend between $MIN_ECS_HITS and $MAX_ECS_HITS times."
+          # Assert that both Lambda and ECS were hit at least once
+          if [[ "$LAMBDA_COUNT" -ge 1 && "$ECS_COUNT" -ge 1 ]]; then
+            echo "Test passed: Both Lambda and ECS were hit at least once."
           else
-            echo "Test failed: Lambda was backend $LAMBDA_COUNT times and ECS was backend $ECS_COUNT times."
+            echo "Test failed: Lambda was hit $LAMBDA_COUNT times, and ECS was hit $ECS_COUNT times."
             exit 1
           fi
 

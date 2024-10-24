@@ -3,7 +3,7 @@ name: Deploy
 on:
   push:
     branches:
-      - main
+      - lb-weighted-traffic
   workflow_dispatch:
 
 permissions:

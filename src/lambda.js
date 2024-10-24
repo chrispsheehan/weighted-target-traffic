@@ -1,35 +1,8 @@
-const express = require('express');
+// lambda.js
+const { createApp } = require('./common');
 const awsServerlessExpress = require('aws-serverless-express');
-const os = require('os');
 
-const app = express();
-app.use(express.json());
-
-const stage = process.env.STAGE || "";
-const backend = process.env.BACKEND || "";
-const basePath = `${stage}/${backend}`
-
-console.log(`App starting with BASE_PATH: ${basePath}`);
-
-app.use((req, res, next) => {
-  console.log(`Request received: ${req.method} ${req.url}`);
-  next();
-});
-
-app.get(`/health`, (req, res) => {
-  res.status(200).json({ msg: "Hello, this is your API" });
-});
-
-app.get(`/${stage}/host`, (req, res) => {
-  const hostname = os.hostname();
-  const currentTime = new Date().toISOString();
-
-  res.status(200).json({
-    message: `Request handled by backend at ${currentTime}`,
-    hostname: hostname,
-    backend: "lambda"
-  });
-});
+const app = createApp();
 
 const server = awsServerlessExpress.createServer(app);
 

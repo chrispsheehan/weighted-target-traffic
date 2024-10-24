@@ -1,38 +1,10 @@
-const express = require('express');
-const os = require('os');
+// app.js
+const { createApp } = require('./common');
 
-const app = express();
-app.use(express.json());
+const app = createApp();
 
-const stage = process.env.STAGE || "";
-const backend = process.env.BACKEND || "";
-const port = process.env.PORT
-
-const basePath = `${stage}/${backend}`
-
-console.log(`App starting with BASE_PATH: ${basePath}`);
-console.log(`App starting with PORT: ${port}`);
-
-app.use((req, res, next) => {
-  console.log(`Request received: ${req.method} ${req.url}`);
-  next();
-});
-
-app.get(`/health`, (req, res) => {
-  res.status(200).json({ msg: "Hello, this is your API" });
-});
-
-app.get(`/${stage}/host`, (req, res) => {
-  const hostname = os.hostname();
-  const currentTime = new Date().toISOString();
-
-  res.status(200).json({
-    message: `Request handled by backend at ${currentTime}`,
-    hostname: hostname,
-    backend: "ecs"
-  });
-});
+const port = process.env.PORT || 3000;
 
 app.listen(port, () => {
-  console.log(`app listening on http://localhost:${port}`);
+  console.log(`App listening on http://localhost:${port}`);
 });

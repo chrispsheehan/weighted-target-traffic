@@ -35,3 +35,18 @@ variable "lambda_percentage_traffic" {
   type    = number
   default = 90
 }
+
+variable "weighted_paths" {
+  type    = list(string)
+  default = ["*"]
+}
+
+variable "ecs_only_paths" {
+  type    = list(string)
+  default = ["small-woodland-creature"]
+}
+
+variable "lambda_only_paths" {
+  type    = list(string)
+  default = ["ice-cream-flavor"]
+}

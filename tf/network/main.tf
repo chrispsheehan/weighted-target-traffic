@@ -65,6 +65,38 @@ resource "aws_lb_listener" "ecs_lambda_listener" {
   }
 }
 
+resource "aws_lb_listener_rule" "lambda_only_rule" {
+  listener_arn = aws_lb_listener.ecs_lambda_listener.arn
+  priority     = 50
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.lambda_tg.arn
+  }
+
+  condition {
+    path_pattern {
+      values = local.lambda_only_paths
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "ecs_only_rule" {
+  listener_arn = aws_lb_listener.ecs_lambda_listener.arn
+  priority     = 75
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.ecs_tg.arn
+  }
+
+  condition {
+    path_pattern {
+      values = local.ecs_only_paths
+    }
+  }
+}
+
 resource "aws_lb_listener_rule" "weighted_rule" {
   listener_arn = aws_lb_listener.ecs_lambda_listener.arn
   priority     = 100
@@ -87,7 +119,7 @@ resource "aws_lb_listener_rule" "weighted_rule" {
 
   condition {
     path_pattern {
-      values = ["/${var.vpc_link_api_stage_name}/*"]
+      values = local.weighted_paths
     }
   }
 }

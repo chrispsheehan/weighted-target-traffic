@@ -12,6 +12,13 @@ const createApp = () => {
     'Badger'
   ];
 
+  const iceCreamFlavors = [
+    'Vanilla',
+    'Chocolate',
+    'Strawberry',
+    'Mint Chocolate Chip'
+  ];
+
   const stage = process.env.STAGE || "unknown";
   const backend = process.env.BACKEND || "unknown"; 
 
@@ -44,6 +51,16 @@ const createApp = () => {
 
     res.status(200).json({
       creature: selectedCreature,
+      backend: backend
+    });
+  });
+
+  app.get(`/${stage}/ice-cream-flavor`, (req, res) => {
+    const randomIndex = Math.floor(Math.random() * iceCreamFlavors.length);
+    const selectedFlavor = iceCreamFlavors[randomIndex];
+  
+    res.status(200).json({
+      flavor: selectedFlavor,
       backend: backend
     });
   });

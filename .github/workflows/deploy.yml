@@ -233,7 +233,7 @@ jobs:
           cd tf/lambda
           terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars
 
-  weighted_test:
+  test:
     runs-on: ubuntu-latest
     needs:
       - network
@@ -280,14 +280,6 @@ jobs:
           else
             exit 1
           fi
-    
-  negative_test:
-    runs-on: ubuntu-latest
-    needs:
-      - network
-      - lambda
-      - ecs
-    steps:
       - name: sleep
         run: sleep 60
       - name: Negative test for 404 response

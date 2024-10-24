@@ -61,7 +61,8 @@ resource "aws_lambda_function" "this" {
 
   environment {
     variables = {
-      BASE_PATH = "${var.vpc_link_api_stage_name}/lambda"
+      STAGE   = var.vpc_link_api_stage_name,
+      BACKEND = "lambda"
     }
   }
 

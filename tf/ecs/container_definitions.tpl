@@ -16,7 +16,7 @@
         "healthcheck": {
             "command": [
                 "CMD-SHELL", 
-                "wget --quiet --spider --tries=1 http://localhost:${container_port}/${base_path}/health || exit 1"
+                "wget --quiet --spider --tries=1 http://localhost:${container_port}/${stage}/${backend}/health || exit 1"
             ],
             "interval": 5,
             "retries": 1,
@@ -34,8 +34,12 @@
         "essential": true,
         "environment": [
             {
-                "name": "BASE_PATH",
-                "value": "${base_path}"
+                "name": "STAGE",
+                "value": "${stage}"
+            },
+            {
+                "name": "BACKEND",
+                "value": "${backend}"
             },
             {
                 "name": "IMAGE",

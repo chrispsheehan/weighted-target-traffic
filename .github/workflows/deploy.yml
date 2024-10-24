@@ -12,8 +12,6 @@ permissions:
 
 env:
   TF_VAR_project_name: ${{ github.event.repository.name }}
-  lambda_traffic_percentage: 90
-  ecs_traffic_percentage: 10
 
 jobs:
   validate:
@@ -181,8 +179,6 @@ jobs:
       TF_VAR_ecs_image_uri: ${{ needs.image.outputs.image_uri }}
       TF_VAR_lb_security_group_id: ${{ needs.network.outputs.lb_security_group_id }}
       TF_VAR_lb_target_group_arn: ${{ needs.network.outputs.lb_ecs_target_group_arn}}
-      TF_VAR_esc_percentage_traffic: ${{ github.env.ecs_traffic_percentage }}
-      TF_VAR_lambda_percentage_traffic: ${{ github.env.lambda_traffic_percentage }}
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3

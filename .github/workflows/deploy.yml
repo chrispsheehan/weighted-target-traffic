@@ -233,62 +233,48 @@ jobs:
           cd tf/lambda
           terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars
 
-  ecs_test:
+  weighted_test:
     runs-on: ubuntu-latest
     needs:
       - network
       - ecs
     steps:
       - name: url
-        run: echo ${{ needs.network.outputs.api_invoke_url}}/ecs/host      
-      - name: Assert API response contains expected fields
+        run: echo ${{ needs.network.outputs.api_invoke_url}}/host 
+      - name: Hit the /host endpoint 10 times and assert backend distribution
         run: |
-          RESPONSE=$(curl -s ${{ needs.network.outputs.api_invoke_url}}/ecs/host)
-          echo "$RESPONSE" | jq
+          LAMBDA_COUNT=0
+          ECS_COUNT=0
 
-          MESSAGE=$(echo "$RESPONSE" | jq -r '.message')
-          HOSTNAME=$(echo "$RESPONSE" | jq -r '.hostname')
-          BACKEND=$(echo "$RESPONSE" | jq -r '.backend')
+          # Loop to hit the endpoint 10 times
+          for i in {1..10}; do
+            RESPONSE=$(curl -s ${{ needs.network.outputs.api_invoke_url}}/host)
+            BACKEND=$(echo "$RESPONSE" | jq -r '.backend')
 
-          if [[ "$MESSAGE" == "null" || "$HOSTNAME" == "null" || "$BACKEND" == "null" ]]; then
-            echo "Error: Response does not contain expected fields."
-            exit 1
-          elif [[ "$BACKEND" != "ecs" ]]; then
-            echo "Error: Backend is not 'ecs'. Found '$BACKEND'."
-            exit 1
+            # Check if the backend field exists
+            if [[ "$BACKEND" == "null" ]]; then
+              echo "Error: Response does not contain backend field."
+              exit 1
+            fi
+
+            # Increment counters based on backend value
+            if [[ "$BACKEND" == "lambda" ]]; then
+              LAMBDA_COUNT=$((LAMBDA_COUNT + 1))
+            elif [[ "$BACKEND" == "ecs" ]]; then
+              ECS_COUNT=$((ECS_COUNT + 1))
+            else
+              echo "Error: Unknown backend '$BACKEND'."
+              exit 1
+            fi
+          done
+
+          echo "Test failed: lambda was backend $LAMBDA_COUNT times and ecs was backend $ECS_COUNT times."
+
+          # Assert that lambda was hit 9 times and ecs was hit 1 time
+          if [[ "$LAMBDA_COUNT" -eq 9 && "$ECS_COUNT" -eq 1 ]]; then
+            echo "Test passed: lambda was backend 9 times and ecs was backend 1 time."
           else
-            echo "API response contains all expected fields and backend is 'ecs'."
-          fi
-    
-  lambda_test:
-    runs-on: ubuntu-latest
-    needs:
-      - network
-      - lambda
-    steps:
-      - name: url
-        run: echo ${{ needs.network.outputs.api_invoke_url}}/lambda/host
-      - name: warm-up lambda
-        run: |
-          curl -s ${{ needs.network.outputs.api_invoke_url}}/lambda/host
-          sleep 10
-      - name: Assert API response contains expected fields
-        run: |
-          RESPONSE=$(curl -s ${{ needs.network.outputs.api_invoke_url}}/lambda/host)
-          echo "$RESPONSE" | jq
-
-          MESSAGE=$(echo "$RESPONSE" | jq -r '.message')
-          HOSTNAME=$(echo "$RESPONSE" | jq -r '.hostname')
-          BACKEND=$(echo "$RESPONSE" | jq -r '.backend')
-
-          if [[ "$MESSAGE" == "null" || "$HOSTNAME" == "null" || "$BACKEND" == "null" ]]; then
-            echo "Error: Response does not contain expected fields."
             exit 1
-          elif [[ "$BACKEND" != "lambda" ]]; then
-            echo "Error: Backend is not 'lambda'. Found '$BACKEND'."
-            exit 1
-          else
-            echo "API response contains all expected fields and backend is 'lambda'."
           fi
 
   negative_test:

@@ -75,12 +75,12 @@ resource "aws_lb_listener_rule" "weighted_rule" {
     forward {
       target_group {
         arn    = aws_lb_target_group.ecs_tg.arn
-        weight = 10  # 10% traffic to ECS
+        weight = var.esc_percentage_traffic
       }
 
       target_group {
         arn    = aws_lb_target_group.lambda_tg.arn
-        weight = 90  # 90% traffic to Lambda
+        weight = var.lambda_percentage_traffic
       }
     }
   }
@@ -142,12 +142,12 @@ resource "aws_apigatewayv2_api" "this" {
 }
 
 resource "aws_apigatewayv2_integration" "alb_integration" {
-  api_id           = aws_apigatewayv2_api.this.id
-  integration_type = "HTTP_PROXY"
-  integration_uri  = aws_lb_listener.ecs_lambda_listener.arn
-  integration_method = "ANY"
-  connection_type    = "VPC_LINK"
-  connection_id      = aws_apigatewayv2_vpc_link.this.id
+  api_id                 = aws_apigatewayv2_api.this.id
+  integration_type       = "HTTP_PROXY"
+  integration_uri        = aws_lb_listener.ecs_lambda_listener.arn
+  integration_method     = "ANY"
+  connection_type        = "VPC_LINK"
+  connection_id          = aws_apigatewayv2_vpc_link.this.id
   payload_format_version = "1.0"
 }
 

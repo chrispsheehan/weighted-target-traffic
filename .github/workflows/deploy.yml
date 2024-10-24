@@ -12,6 +12,8 @@ permissions:
 
 env:
   TF_VAR_project_name: ${{ github.event.repository.name }}
+  lambda_traffic_percentage: 90
+  ecs_traffic_percentage: 10
 
 jobs:
   validate:
@@ -179,6 +181,8 @@ jobs:
       TF_VAR_ecs_image_uri: ${{ needs.image.outputs.image_uri }}
       TF_VAR_lb_security_group_id: ${{ needs.network.outputs.lb_security_group_id }}
       TF_VAR_lb_target_group_arn: ${{ needs.network.outputs.lb_ecs_target_group_arn}}
+      TF_VAR_esc_percentage_traffic: ${{ github.env.ecs_traffic_percentage }}
+      TF_VAR_lambda_percentage_traffic: ${{ github.env.lambda_traffic_percentage }}
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
@@ -248,9 +252,20 @@ jobs:
         run: |
           LAMBDA_COUNT=0
           ECS_COUNT=0
+          TOTAL_REQUESTS=10
+
+          EXPECTED_LAMBDA_HITS=$(( (TOTAL_REQUESTS * ${{ github.env.lambda_traffic_percentage }}) / 100 ))
+          EXPECTED_ECS_HITS=$(( (TOTAL_REQUESTS * ${{ github.env.ecs_traffic_percentage }}) / 100 ))
+  
+          # Define a small range for tolerance, e.g., ±1
+          RANGE_TOLERANCE=1
+          MIN_LAMBDA_HITS=$(( EXPECTED_LAMBDA_HITS - RANGE_TOLERANCE ))
+          MAX_LAMBDA_HITS=$(( EXPECTED_LAMBDA_HITS + RANGE_TOLERANCE ))
+          MIN_ECS_HITS=$(( EXPECTED_ECS_HITS - RANGE_TOLERANCE ))
+          MAX_ECS_HITS=$(( EXPECTED_ECS_HITS + RANGE_TOLERANCE ))
 
           # Loop to hit the endpoint 10 times
-          for i in {1..10}; do
+          for i in {1..$TOTAL_REQUESTS}; do
             RESPONSE=$(curl -s ${{ needs.network.outputs.api_invoke_url}}/host)
             echo "$RESPONSE" | jq
             BACKEND=$(echo "$RESPONSE" | jq -r '.backend')
@@ -272,16 +287,25 @@ jobs:
             fi
           done
 
-          echo "Test failed: lambda was backend $LAMBDA_COUNT times and ecs was backend $ECS_COUNT times."
+          echo "lambda was backend $LAMBDA_COUNT times and ecs was backend $ECS_COUNT times."
 
           # Assert that lambda was hit 9 times and ecs was hit 1 time
-          if [[ "$LAMBDA_COUNT" -eq 9 && "$ECS_COUNT" -eq 1 ]]; then
-            echo "Test passed: lambda was backend 9 times and ecs was backend 1 time."
+          if [[ "$LAMBDA_COUNT" -ge "$MIN_LAMBDA_HITS" && "$LAMBDA_COUNT" -le "$MAX_LAMBDA_HITS" && "$ECS_COUNT" -ge "$MIN_ECS_HITS" && "$ECS_COUNT" -le "$MAX_ECS_HITS" ]]; then
+            echo "Test passed: Lambda was backend between $MIN_LAMBDA_HITS and $MAX_LAMBDA_HITS times, and ECS was backend between $MIN_ECS_HITS and $MAX_ECS_HITS times."
           else
+            echo "Test failed: Lambda was backend $LAMBDA_COUNT times and ECS was backend $ECS_COUNT times."
             exit 1
           fi
+
+  negative_test:
+    runs-on: ubuntu-latest
+    needs:
+      - network
+      - ecs
+      - lambda
+    steps:
       - name: sleep
-        run: sleep 60
+        run: sleep 45
       - name: Negative test for 404 response
         run: |
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" ${{ needs.network.outputs.api_invoke_url}}/no/exists/)

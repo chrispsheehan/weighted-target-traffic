@@ -67,7 +67,7 @@ resource "aws_lambda_function" "this" {
   }
 
   lifecycle {
-    prevent_destroy = false
+    prevent_destroy       = false
     create_before_destroy = true # This ensures the SG isn't removed before ENIs are detached
   }
 }

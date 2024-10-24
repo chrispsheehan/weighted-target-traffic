@@ -18,7 +18,7 @@ app.get(`/${basePath}/health`, (req, res) => {
   res.status(200).json({ msg: "Hello, this is your API" });
 });
 
-app.get(`/${basePath}/host`, (req, res) => {
+app.get(`/dev/host`, (req, res) => {
   const hostname = os.hostname();
   const currentTime = new Date().toISOString();
 

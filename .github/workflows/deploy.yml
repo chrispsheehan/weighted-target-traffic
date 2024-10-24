@@ -237,7 +237,6 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - network
-      - lambda
       - ecs
     steps:
       - name: url
@@ -266,10 +265,13 @@ jobs:
     needs:
       - network
       - lambda
-      - ecs
     steps:
       - name: url
         run: echo ${{ needs.network.outputs.api_invoke_url}}/lambda/host
+      - name: warm-up lambda
+        run: |
+          curl -s ${{ needs.network.outputs.api_invoke_url}}/lambda/host
+          sleep 10
       - name: Assert API response contains expected fields
         run: |
           RESPONSE=$(curl -s ${{ needs.network.outputs.api_invoke_url}}/lambda/host)

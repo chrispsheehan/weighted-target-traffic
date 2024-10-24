@@ -87,7 +87,7 @@ resource "aws_lb_listener_rule" "weighted_rule" {
 
   condition {
     path_pattern {
-      values = ["/${var.vpc_link_api_stage_name}/host"]
+      values = ["/${var.vpc_link_api_stage_name}/*"]
     }
   }
 }

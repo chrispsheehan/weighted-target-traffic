@@ -288,6 +288,8 @@ jobs:
       - lambda
       - ecs
     steps:
+      - name: sleep
+        run: sleep 60
       - name: Negative test for 404 response
         run: |
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" ${{ needs.network.outputs.api_invoke_url}}/no/exists/)

@@ -241,7 +241,9 @@ jobs:
       - lambda
     steps:
       - name: url
-        run: echo ${{ needs.network.outputs.api_invoke_url}}/host 
+        run: echo ${{ needs.network.outputs.api_invoke_url}}/host
+      - name: sleep
+        run: sleep 60
       - name: Hit the /host endpoint 10 times and assert backend distribution
         run: |
           LAMBDA_COUNT=0

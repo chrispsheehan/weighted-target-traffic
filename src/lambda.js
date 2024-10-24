@@ -16,7 +16,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get(`/${basePath}/health`, (req, res) => {
+app.get(`/health`, (req, res) => {
   res.status(200).json({ msg: "Hello, this is your API" });
 });
 

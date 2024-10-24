@@ -40,7 +40,7 @@ resource "aws_lb_target_group" "ecs_tg" {
 
   health_check {
     interval            = 10
-    path                = local.ecs_healthcheck_path
+    path                = local.healthcheck_path
     protocol            = "HTTP"
     matcher             = "200"
     timeout             = 5
@@ -101,7 +101,7 @@ resource "aws_lb_target_group" "lambda_tg" {
 
   health_check {
     interval            = 10
-    path                = local.lambda_healthcheck_path
+    path                = local.healthcheck_path
     protocol            = "HTTP"
     matcher             = "200"
     timeout             = 5

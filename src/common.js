@@ -65,6 +65,14 @@ const createApp = () => {
     });
   });
 
+  app.use((req, res) => {
+    res.status(404).json({
+      error: "Resource not found",
+      message: `The path ${req.originalUrl} does not exist on this server.`,
+      backend: backend
+    });
+  });
+
   return app;
 };
 

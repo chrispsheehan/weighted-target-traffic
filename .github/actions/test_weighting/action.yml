@@ -12,6 +12,10 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Echo URL
+      shell: bash
+      run: echo ${{ inputs.base_url }}
+
     - name: Sleep for stability
       shell: bash
       run: sleep 60

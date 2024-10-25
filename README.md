@@ -42,29 +42,35 @@ variable "lambda_percentage_traffic" {
 
 ## path rules
 
-- Passed in as `terraform apply -var='path_rules={}'` default value json shown below.
-- Define which paths are to be weighted. `*` in this example will be a default.
-- Define which path are to only go to ecs/lambda services.
-- Highest `priority` number will be prioritised the lowest. In this case weighted paths are a default.
+- Passed in as `terraform apply -var='weighted_rules={}'` default value json shown below.
+- For each path define weighting to lambda and/or ecs.
+- In the below:
+  - `*` will be a default.
+  - `host` will be weighted 50/50 to ecs/lambda.
+  - `small-woodland-creature` will go to ecs only.
+  - `ice-cream-flavour` will go to lambda only.
+
 
 ```hcl
 {
-  weighted_paths = {
+  "*" = {
     ecs_percentage_traffic    = 10
     lambda_percentage_traffic = 90
-    paths                     = ["*"]
+    priority                  = 900
+  },
+  "host" = {
+    ecs_percentage_traffic    = 50
+    lambda_percentage_traffic = 50
     priority                  = 300
-  }
-  ecs_only_paths = {
+  },
+  "small-woodland-creature" = {
     ecs_percentage_traffic    = 100
     lambda_percentage_traffic = 0
-    paths                     = ["small-woodland-creature"]
     priority                  = 200
-  }
-  lambda_only_paths = {
+  },
+  "ice-cream-flavour" = {
     ecs_percentage_traffic    = 0
     lambda_percentage_traffic = 100
-    paths                     = ["ice-cream-flavour"]
     priority                  = 100
   }
 }

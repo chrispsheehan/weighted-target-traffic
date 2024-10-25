@@ -65,31 +65,29 @@ resource "aws_lb_listener" "ecs_lambda_listener" {
   }
 }
 
-resource "aws_lb_listener_rule" "path_based_rule" {
-  for_each     = local.stage_weighted_paths
+resource "aws_lb_listener_rule" "weighted_rule" {
+  for_each     = var.weighted_rules
   listener_arn = aws_lb_listener.ecs_lambda_listener.arn
   priority     = each.value.priority
 
-  dynamic "action" {
-    for_each = [1]
-    content {
-      type = "forward"
-      forward {
-        target_group {
-          arn    = aws_lb_target_group.ecs_tg.arn
-          weight = each.key == "weighted_paths" ? each.value.ecs_percentage_traffic : 100
-        }
-        target_group {
-          arn    = aws_lb_target_group.lambda_tg.arn
-          weight = each.key == "weighted_paths" ? each.value.lambda_percentage_traffic : 100
-        }
+  action {
+    type = "forward"
+
+    forward {
+      target_group {
+        arn    = aws_lb_target_group.ecs_tg.arn
+        weight = each.value.ecs_percentage_traffic
+      }
+      target_group {
+        arn    = aws_lb_target_group.lambda_tg.arn
+        weight = each.value.lambda_percentage_traffic
       }
     }
   }
 
   condition {
     path_pattern {
-      values = each.value.paths
+      values = [each.key]
     }
   }
 }

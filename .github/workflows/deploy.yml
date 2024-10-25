@@ -240,6 +240,7 @@ jobs:
       - ecs
       - lambda
     steps:
+      - uses: actions/checkout@v4
       - name: Test Backend Weighting
         uses: ./.github/actions/test_weighting
         with:
@@ -253,6 +254,7 @@ jobs:
       - ecs
       - lambda
     steps:
+      - uses: actions/checkout@v4
       - name: Test Lambda only endpoints
         uses: ./.github/actions/test_weighting
         with:
@@ -266,6 +268,7 @@ jobs:
       - ecs
       - lambda
     steps:
+      - uses: actions/checkout@v4
       - name: Test ECS only endpoints
         uses: ./.github/actions/test_weighting
         with:

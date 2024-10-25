@@ -45,7 +45,6 @@ variable "lambda_percentage_traffic" {
 - Passed in as `terraform apply -var='weighted_rules={}'` default value json shown below.
 - For each path define weighting to lambda and/or ecs.
 - In the below:
-  - `*` will be a default.
   - `host` will be weighted 50/50 to ecs/lambda.
   - `small-woodland-creature` will go to ecs only.
   - `ice-cream-flavour` will go to lambda only.
@@ -53,11 +52,6 @@ variable "lambda_percentage_traffic" {
 
 ```hcl
 {
-  "*" = {
-    ecs_percentage_traffic    = 10
-    lambda_percentage_traffic = 90
-    priority                  = 900
-  },
   "host" = {
     ecs_percentage_traffic    = 50
     lambda_percentage_traffic = 50
@@ -73,6 +67,15 @@ variable "lambda_percentage_traffic" {
     lambda_percentage_traffic = 100
     priority                  = 100
   }
+}
+```
+
+- Default values are set with `terraform apply -var='default_weighting'` the below example sends all traffic to lambda.
+
+```hcl
+{
+  ecs_percentage_traffic    = 0
+  lambda_percentage_traffic = 100
 }
 ```
 

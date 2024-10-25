@@ -287,6 +287,7 @@ jobs:
       - name: Negative test for 404 response
         run: |
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" ${{ needs.network.outputs.api_invoke_url}}/no/exists/)
+          echo "$RESPONSE" | jq
           
           # Check if the response status code is 404
           if [[ "$RESPONSE" -ne 404 ]]; then

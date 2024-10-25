@@ -55,12 +55,17 @@ resource "aws_lb_listener" "ecs_lambda_listener" {
   protocol          = "HTTP"
 
   default_action {
-    type = "fixed-response"
+    type = "forward"
 
-    fixed_response {
-      content_type = "text/plain"
-      message_body = "Error: ALB Resource not found"
-      status_code  = "404"
+    forward {
+      target_group {
+        arn    = aws_lb_target_group.ecs_tg.arn
+        weight = var.default_weighting.ecs_percentage_traffic
+      }
+      target_group {
+        arn    = aws_lb_target_group.lambda_tg.arn
+        weight = var.default_weighting.lambda_percentage_traffic
+      }
     }
   }
 }
@@ -87,7 +92,7 @@ resource "aws_lb_listener_rule" "weighted_rule" {
 
   condition {
     path_pattern {
-      values = ["/${each.key}"]
+      values = ["/${var.vpc_link_api_stage_name}/${each.key}"]
     }
   }
 }

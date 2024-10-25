@@ -26,6 +26,18 @@ variable "log_retention_days" {
   type = number
 }
 
+variable "default_weighting" {
+  description = "Weighting for the default action between ECS and Lambda"
+  type = object({
+    ecs_percentage_traffic    = number
+    lambda_percentage_traffic = number
+  })
+  default = {
+    ecs_percentage_traffic    = 0
+    lambda_percentage_traffic = 100
+  }
+}
+
 variable "weighted_rules" {
   type = map(object({
     ecs_percentage_traffic    = number
@@ -33,11 +45,6 @@ variable "weighted_rules" {
     priority                  = number
   }))
   default = {
-    "*" = {
-      ecs_percentage_traffic    = 10
-      lambda_percentage_traffic = 90
-      priority                  = 900
-    },
     "host" = {
       ecs_percentage_traffic    = 50
       lambda_percentage_traffic = 50
@@ -56,12 +63,12 @@ variable "weighted_rules" {
   }
 
   validation {
-    condition = alltrue([for rule in var.weighted_rules : rule.priority <= var.weighted_rules["*"].priority])
-    error_message = "The '*' rule must have the highest priority number in weighted_rules."
+    condition = length(distinct([for rule in var.weighted_rules : rule.priority])) == length(var.weighted_rules)
+    error_message = "Each rule in weighted_rules must have a unique priority."
   }
 
   validation {
-    condition = length(distinct([for rule in var.weighted_rules : rule.priority])) == length(var.weighted_rules)
-    error_message = "Each rule in weighted_rules must have a unique priority."
+    condition = alltrue([for key in keys(var.weighted_rules) : key != "*"])
+    error_message = "No path in weighted_rules can be '*'. Use var.default_weighting"
   }
 }

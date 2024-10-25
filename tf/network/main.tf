@@ -65,65 +65,34 @@ resource "aws_lb_listener" "ecs_lambda_listener" {
   }
 }
 
-resource "aws_lb_listener_rule" "lambda_only_rule" {
+resource "aws_lb_listener_rule" "path_based_rule" {
+  for_each     = local.stage_weighted_paths
   listener_arn = aws_lb_listener.ecs_lambda_listener.arn
-  priority     = 50
+  priority     = each.value.priority
 
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.lambda_tg.arn
-  }
-
-  condition {
-    path_pattern {
-      values = local.lambda_only_paths
-    }
-  }
-}
-
-resource "aws_lb_listener_rule" "ecs_only_rule" {
-  listener_arn = aws_lb_listener.ecs_lambda_listener.arn
-  priority     = 75
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.ecs_tg.arn
-  }
-
-  condition {
-    path_pattern {
-      values = local.ecs_only_paths
-    }
-  }
-}
-
-resource "aws_lb_listener_rule" "weighted_rule" {
-  listener_arn = aws_lb_listener.ecs_lambda_listener.arn
-  priority     = 100
-
-  action {
-    type = "forward"
-
-    forward {
-      target_group {
-        arn    = aws_lb_target_group.ecs_tg.arn
-        weight = var.esc_percentage_traffic
-      }
-
-      target_group {
-        arn    = aws_lb_target_group.lambda_tg.arn
-        weight = var.lambda_percentage_traffic
+  dynamic "action" {
+    for_each = [1]
+    content {
+      type = "forward"
+      forward {
+        target_group {
+          arn    = aws_lb_target_group.ecs_tg.arn
+          weight = each.key == "weighted_paths" ? each.value.ecs_percentage_traffic : 100
+        }
+        target_group {
+          arn    = aws_lb_target_group.lambda_tg.arn
+          weight = each.key == "weighted_paths" ? each.value.lambda_percentage_traffic : 100
+        }
       }
     }
   }
 
   condition {
     path_pattern {
-      values = local.weighted_paths
+      values = each.value.paths
     }
   }
 }
-
 
 resource "aws_lb_target_group" "lambda_tg" {
   name        = "lambda-tg"

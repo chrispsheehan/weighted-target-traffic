@@ -42,26 +42,31 @@ variable "lambda_percentage_traffic" {
 
 ## path rules
 
+- Passed in as `terraform apply -var='path_rules={}'` default value json shown below.
 - Define which paths are to be weighted. `*` in this example will be a default.
+- Define which path are to only go to ecs/lambda services.
+- Lowest `priority` number will be prioritised the highest.
 
-```tf
-variable "weighted_paths" {
-  type    = list(string)
-  default = ["*"]
-}
-```
-
-- Define which paths are to only got to ecs/lambda. Weighting will subsequently be ignored.
-
-```tf
-variable "ecs_only_paths" {
-  type    = list(string)
-  default = ["small-woodland-creature"]
-}
-
-variable "lambda_only_paths" {
-  type    = list(string)
-  default = ["ice-cream-flavor"]
+```hcl
+{
+  weighted_paths={
+    ecs_percentage_traffic=20,
+    lambda_percentage_traffic=80,
+    paths=["*"],
+    priority=100
+  },
+  ecs_only_paths={
+    ecs_percentage_traffic=100,
+    lambda_percentage_traffic=0,
+    paths=["api/ecs-only"],
+    priority=200
+  },
+  lambda_only_paths={
+    ecs_percentage_traffic=0,
+    lambda_percentage_traffic=100,
+    paths=["api/lambda-only"],
+    priority=300
+  }
 }
 ```
 

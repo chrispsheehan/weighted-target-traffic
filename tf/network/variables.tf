@@ -26,27 +26,31 @@ variable "log_retention_days" {
   type = number
 }
 
-variable "esc_percentage_traffic" {
-  type    = number
-  default = 10
-}
-
-variable "lambda_percentage_traffic" {
-  type    = number
-  default = 90
-}
-
-variable "weighted_paths" {
-  type    = list(string)
-  default = ["*"]
-}
-
-variable "ecs_only_paths" {
-  type    = list(string)
-  default = ["small-woodland-creature"]
-}
-
-variable "lambda_only_paths" {
-  type    = list(string)
-  default = ["ice-cream-flavor"]
+variable "path_rules" {
+  type = map(object({
+    ecs_percentage_traffic    = number
+    lambda_percentage_traffic = number
+    paths                     = list(string)
+    priority                  = number
+  }))
+  default = {
+    weighted_paths = {
+      ecs_percentage_traffic    = 10
+      lambda_percentage_traffic = 90
+      paths                     = ["*"]
+      priority                  = 100 # Highest priority (lower number)
+    }
+    ecs_only_paths = {
+      ecs_percentage_traffic    = 100
+      lambda_percentage_traffic = 0
+      paths                     = ["small-woodland-creature"]
+      priority                  = 200
+    }
+    lambda_only_paths = {
+      ecs_percentage_traffic    = 0
+      lambda_percentage_traffic = 100
+      paths                     = ["ice-cream-flavor"]
+      priority                  = 300
+    }
+  }
 }

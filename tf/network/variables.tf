@@ -38,7 +38,7 @@ variable "path_rules" {
       ecs_percentage_traffic    = 10
       lambda_percentage_traffic = 90
       paths                     = ["*"]
-      priority                  = 100 # Highest priority (lower number)
+      priority                  = 300
     }
     ecs_only_paths = {
       ecs_percentage_traffic    = 100
@@ -49,8 +49,8 @@ variable "path_rules" {
     lambda_only_paths = {
       ecs_percentage_traffic    = 0
       lambda_percentage_traffic = 100
-      paths                     = ["ice-cream-flavor"]
-      priority                  = 300
+      paths                     = ["ice-cream-flavour"]
+      priority                  = 100
     }
   }
 }

@@ -55,7 +55,7 @@ const createApp = () => {
     });
   });
 
-  app.get(`/${stage}/ice-cream-flavor`, (req, res) => {
+  app.get(`/${stage}/ice-cream-flavour`, (req, res) => {
     const randomIndex = Math.floor(Math.random() * iceCreamFlavors.length);
     const selectedFlavor = iceCreamFlavors[randomIndex];
   

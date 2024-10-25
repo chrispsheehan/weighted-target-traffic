@@ -24,23 +24,7 @@ In this use case we can incrementally move endpoints to ECS from Lambda.
 3. **network** Destroy vpc link and api gateway ingress resources.
 4. **repo** Destroy ecr, images and lambda s3 zips.
 
-## path weighting
-
-- Define what percentage of traffic is to go to ecs/lambda. In this example 90% will go to Lambda.
-
-```tf
-variable "esc_percentage_traffic" {
-  type    = number
-  default = 10
-}
-
-variable "lambda_percentage_traffic" {
-  type    = number
-  default = 90
-}
-```
-
-## path rules
+## path weighting rules
 
 - Passed in as `terraform apply -var='weighted_rules={}'` default value json shown below.
 - For each path define weighting to lambda and/or ecs.
@@ -48,7 +32,6 @@ variable "lambda_percentage_traffic" {
   - `host` will be weighted 50/50 to ecs/lambda.
   - `small-woodland-creature` will go to ecs only.
   - `ice-cream-flavour` will go to lambda only.
-
 
 ```hcl
 {

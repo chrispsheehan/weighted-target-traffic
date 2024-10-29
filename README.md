@@ -9,7 +9,7 @@ In this use case we can incrementally move endpoints to ECS from Lambda.
 `Deploy` workflow - push on `main` trigger
 
 1. **validate** Check terraform code for any errors.
-2. **repo** Setup ECR and S£ repositories.
+2. **repo** Setup ECR and S3 repositories.
 3. **network** Apply vpc link and api gateway ingress along with load balancer and rules.
 4. **image** Build image if changes to `src/*` detected
 5. **code** Build Lambda code as zip if changes to `src/*` detected

@@ -218,6 +218,7 @@ jobs:
       TF_VAR_lb_target_group_arn: ${{ needs.network.outputs.lb_lambda_target_group_arn}}
     steps:
       - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ vars.aws_region }}

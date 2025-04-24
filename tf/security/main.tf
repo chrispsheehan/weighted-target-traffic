@@ -15,6 +15,10 @@ resource "aws_security_group_rule" "ecs_ingress_from_lb" {
   security_group_id        = aws_security_group.ecs_sg.id
   source_security_group_id = aws_security_group.lb_sg.id
   description              = "Allow ingress from the load balancer to the ECS container port"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_security_group_rule" "ecs_egress_https" {
@@ -25,6 +29,10 @@ resource "aws_security_group_rule" "ecs_egress_https" {
   security_group_id = aws_security_group.ecs_sg.id
   cidr_blocks       = ["0.0.0.0/0"]
   description       = "Allow ECS to access public AWS services over HTTPS (e.g., ECR, CloudWatch)"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_security_group" "lambda_sg" {
@@ -44,6 +52,10 @@ resource "aws_security_group_rule" "lambda_ingress_from_lb" {
   security_group_id        = aws_security_group.lambda_sg.id
   source_security_group_id = aws_security_group.lb_sg.id
   description              = "Allow ingress from the load balancer to the Lambda function on port range 0-65535"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_security_group_rule" "lambda_egress_to_logs" {
@@ -54,6 +66,10 @@ resource "aws_security_group_rule" "lambda_egress_to_logs" {
   security_group_id = aws_security_group.lambda_sg.id
   cidr_blocks       = ["0.0.0.0/0"]
   description       = "Allow Lambda to send logs to CloudWatch Logs (HTTPS)"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 resource "aws_security_group" "lb_sg" {
   vpc_id = data.aws_vpc.private.id
@@ -72,6 +88,10 @@ resource "aws_security_group_rule" "lb_ingress_from_private_subnets" {
   security_group_id = aws_security_group.lb_sg.id
   cidr_blocks       = local.private_subnet_cidrs
   description       = "Allow ingress from private subnets to the ALB listener"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_security_group_rule" "lb_egress_to_vpc" {
@@ -82,6 +102,10 @@ resource "aws_security_group_rule" "lb_egress_to_vpc" {
   security_group_id = aws_security_group.lb_sg.id
   cidr_blocks       = [data.aws_vpc.private.cidr_block]
   description       = "Limit outgoing traffic from ALB to VPC"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 resource "aws_security_group" "api_gateway_vpc_link" {
   name        = local.vpc_link_security_group_name
@@ -101,6 +125,10 @@ resource "aws_security_group_rule" "vpc_link_ingress_http" {
   security_group_id = aws_security_group.api_gateway_vpc_link.id
   cidr_blocks       = local.private_subnet_cidrs
   description       = "Allow HTTP ingress from private subnets to API Gateway VPC Link"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_security_group_rule" "vpc_link_egress_http" {
@@ -111,4 +139,8 @@ resource "aws_security_group_rule" "vpc_link_egress_http" {
   security_group_id = aws_security_group.api_gateway_vpc_link.id
   cidr_blocks       = local.private_subnet_cidrs
   description       = "Allow HTTP egress from API Gateway VPC Link to private subnets"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }

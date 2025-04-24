@@ -13,14 +13,14 @@ resource "aws_security_group_rule" "ecs_ingress_from_lb" {
   description              = "Allow ingress from the load balancer to the ECS container port"
 }
 
-resource "aws_security_group_rule" "ecs_egress_to_vpc" {
+resource "aws_security_group_rule" "ecs_egress_https" {
   type              = "egress"
   from_port         = 443
   to_port           = 443
   protocol          = "tcp"
   security_group_id = aws_security_group.ecs_sg.id
-  cidr_blocks       = [data.aws_vpc.private.cidr_block]
-  description       = "Allow ECS to talk to VPC endpoints and internal services"
+  cidr_blocks       = ["0.0.0.0/0"]
+  description       = "Allow ECS to access public AWS services over HTTPS (e.g., ECR, CloudWatch)"
 }
 
 resource "aws_security_group" "lambda_sg" {

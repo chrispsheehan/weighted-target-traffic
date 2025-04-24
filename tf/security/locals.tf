@@ -8,5 +8,5 @@ locals {
   lb_security_group_name       = "${var.project_name}-lb-sg"
   ecs_security_group_name      = "${var.project_name}-ecs-sg"
   lambda_security_group_name   = "${var.project_name}-lambda-sg"
-  vpc_link_security_group_name = "${var.project_name}-api-gateway-vpc-link-sg"
+  vpc_link_security_group_name = "${var.project_name}-vpc-link-sg"
 }

@@ -22,10 +22,6 @@ variable "private_vpc_name" {
   type = string
 }
 
-variable "log_retention_days" {
-  type = number
-}
-
 variable "default_weighting" {
   description = "Weighting for the default action between ECS and Lambda"
   type = object({

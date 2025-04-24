@@ -142,7 +142,7 @@ jobs:
     outputs:
       lb_ecs_target_group_arn: ${{ steps.set-envs.outputs.LB_ECS_TARGET_GROUP_ARN }}
       lb_lambda_target_group_arn: ${{ steps.set-envs.outputs.LB_LAMBDA_TARGET_GROUP_ARN }}
-      api_invoke_url: ${{ steps.set-envs.outputs.API_INVOKE_URL }}
+      ecs_lambda_listener_arn: ${{ steps.set-envs.outputs.ECS_LAMBDA_LISTENER_ARN }}
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
@@ -170,12 +170,12 @@ jobs:
         shell: bash
         run: |
           cd tf/network
-          API_INVOKE_URL=$(terraform output -raw api_invoke_url)
           LB_ECS_TARGET_GROUP_ARN=$(terraform output -raw lb_ecs_target_group_arn)
           LB_LAMBDA_TARGET_GROUP_ARN=$(terraform output -raw lb_lambda_target_group_arn)
-          echo "API_INVOKE_URL=$API_INVOKE_URL" >> $GITHUB_OUTPUT
+          ECS_LAMBDA_LISTENER_ARN=$(terraform output -raw ecs_lambda_listener_arn)
           echo "LB_ECS_TARGET_GROUP_ARN=$LB_ECS_TARGET_GROUP_ARN" >> $GITHUB_OUTPUT
           echo "LB_LAMBDA_TARGET_GROUP_ARN=$LB_LAMBDA_TARGET_GROUP_ARN" >> $GITHUB_OUTPUT
+          echo "ECS_LAMBDA_LISTENER_ARN=$ECS_LAMBDA_LISTENER_ARN" >> $GITHUB_OUTPUT
 
   ecs:
     needs:
@@ -208,6 +208,48 @@ jobs:
         run: |
           cd tf/ecs
           terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars
+
+  api:
+    needs: 
+      - repo
+      - code
+      - network
+    runs-on: ubuntu-latest
+    outputs:
+      api_invoke_url: ${{ steps.set-envs.outputs.API_INVOKE_URL }}
+    env:
+      TF_VAR_lambda_zip: ${{ needs.code.outputs.lambda_zip }}
+      TF_VAR_lambda_bucket: ${{ needs.repo.outputs.lambda_code_bucket }}
+      TF_VAR_lb_target_group_arn: ${{ needs.network.outputs.lb_lambda_target_group_arn}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.aws_region }}
+          role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
+          role-session-name: GitHubActions
+
+      - name: Init
+        shell: bash
+        run: |
+          cd tf/api
+          terraform init
+        
+      - name: Deploy
+        shell: bash
+        id: deploy
+        run: |
+          cd tf/api
+          terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars
+
+      - name: Set env vars
+        id: set-envs
+        shell: bash
+        run: |
+          cd tf/api
+          API_INVOKE_URL=$(terraform output -raw api_invoke_url)
+          echo "API_INVOKE_URL=$API_INVOKE_URL" >> $GITHUB_OUTPUT
 
   lambda:
     needs: 
@@ -247,12 +289,13 @@ jobs:
       - network
       - ecs
       - lambda
+      - api
     steps:
       - uses: actions/checkout@v4
       - name: Test Backend Weighting
         uses: ./.github/actions/test_weighting
         with:
-          base_url: ${{ needs.network.outputs.api_invoke_url}}/host
+          base_url: ${{ needs.api.outputs.api_invoke_url}}/host
           expected_backends: "lambda,ecs"
 
   lambda_test:
@@ -289,12 +332,13 @@ jobs:
       - network
       - ecs
       - lambda
+      - api
     steps:
       - name: sleep
         run: sleep 45
       - name: Negative test for 404 response
         run: |
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" ${{ needs.network.outputs.api_invoke_url}}/no/exists/)
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" ${{ needs.api.outputs.api_invoke_url}}/no/exists/)
           echo "$RESPONSE" | jq
           
           # Check if the response status code is 404

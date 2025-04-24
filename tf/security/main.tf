@@ -24,9 +24,9 @@ resource "aws_security_group" "lambda_sg" {
   name   = local.lambda_security_group_name
 
   ingress {
-    description     = "Allow ingress from the load balancer to the lambda function on lambda port ${local.lambda_port}"
+    description     = "Allow ingress from the load balancer to the lambda function on lambda port 65535"
     from_port       = 0
-    to_port         = local.lambda_port 
+    to_port         = 65535 
     protocol        = "tcp"
     security_groups = [aws_security_group.lb_sg.id]
   }
@@ -45,22 +45,18 @@ resource "aws_security_group" "lb_sg" {
   name   = local.lb_security_group_name
 
   ingress {
-    description = "Allow only traffic from vpc link"
     from_port   = var.load_balancer_port
     to_port     = var.load_balancer_port
     protocol    = "tcp"
-    security_groups = [aws_security_group.api_gateway_vpc_link.id]
+    cidr_blocks = local.private_subnet_cidrs
   }
 
   egress {
-    description = "Allow ALB to reach ECS and Lambda targets only"
+    description = "limit outgoing traffic to the VPC link"
     from_port   = 0
-    to_port     = local.lambda_port
-    protocol    = "tcp"
-    security_groups = [
-      aws_security_group.ecs_sg.id,
-      aws_security_group.lambda_sg.id
-    ]
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = [data.aws_vpc.private.cidr_block]
   }
 }
 

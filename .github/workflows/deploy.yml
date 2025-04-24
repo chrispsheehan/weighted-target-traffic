@@ -305,12 +305,13 @@ jobs:
       - network
       - ecs
       - lambda
+      - api
     steps:
       - uses: actions/checkout@v4
       - name: Test Lambda only endpoints
         uses: ./.github/actions/test_weighting
         with:
-          base_url: ${{ needs.network.outputs.api_invoke_url}}/ice-cream-flavour
+          base_url: ${{ needs.api.outputs.api_invoke_url}}/ice-cream-flavour
           expected_backends: "lambda"
 
   ecs_test:
@@ -319,12 +320,13 @@ jobs:
       - network
       - ecs
       - lambda
+      - api
     steps:
       - uses: actions/checkout@v4
       - name: Test ECS only endpoints
         uses: ./.github/actions/test_weighting
         with:
-          base_url: ${{ needs.network.outputs.api_invoke_url}}/small-woodland-creature
+          base_url: ${{ needs.api.outputs.api_invoke_url}}/small-woodland-creature
           expected_backends: "ecs"
 
   negative_test:

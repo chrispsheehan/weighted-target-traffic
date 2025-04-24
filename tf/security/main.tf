@@ -80,33 +80,49 @@ resource "aws_security_group" "lb_sg" {
   }
 }
 
-resource "aws_security_group_rule" "lb_ingress_from_private_subnets" {
-  type              = "ingress"
-  from_port         = var.load_balancer_port
-  to_port           = var.load_balancer_port
-  protocol          = "tcp"
-  security_group_id = aws_security_group.lb_sg.id
-  cidr_blocks       = local.private_subnet_cidrs
-  description       = "Allow ingress from private subnets to the ALB listener"
+resource "aws_security_group_rule" "lb_ingress_from_apigw_vpc_link" {
+  type                     = "ingress"
+  from_port                = var.load_balancer_port
+  to_port                  = var.load_balancer_port
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.lb_sg.id
+  source_security_group_id = aws_security_group.api_gateway_vpc_link.id
+  description              = "Only allow ingress from API Gateway VPC Link"
 
   lifecycle {
     create_before_destroy = true
   }
 }
 
-resource "aws_security_group_rule" "lb_egress_to_vpc" {
-  type              = "egress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  security_group_id = aws_security_group.lb_sg.id
-  cidr_blocks       = [data.aws_vpc.private.cidr_block]
-  description       = "Limit outgoing traffic from ALB to VPC"
+resource "aws_security_group_rule" "lb_egress_to_ecs" {
+  type                     = "egress"
+  from_port                = 0
+  to_port                  = 65535
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.lb_sg.id
+  source_security_group_id = aws_security_group.ecs_sg.id
+  description              = "Allow egress to ECS target SG"
 
   lifecycle {
     create_before_destroy = true
   }
 }
+
+resource "aws_security_group_rule" "lb_egress_to_lambda" {
+  type                     = "egress"
+  from_port                = 0
+  to_port                  = 65535
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.lb_sg.id
+  source_security_group_id = aws_security_group.lambda_sg.id
+  description              = "Allow egress to Lambda target SG"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+
 resource "aws_security_group" "api_gateway_vpc_link" {
   name        = local.vpc_link_security_group_name
   description = "Security group for API Gateway VPC link"

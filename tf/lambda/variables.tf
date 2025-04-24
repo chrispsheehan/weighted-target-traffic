@@ -34,7 +34,3 @@ variable "lambda_zip" {
 variable "lb_target_group_arn" {
   type = string
 }
-
-variable "lb_security_group_id" {
-  type = string
-}

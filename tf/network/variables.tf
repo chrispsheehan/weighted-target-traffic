@@ -63,12 +63,12 @@ variable "weighted_rules" {
   }
 
   validation {
-    condition = length(distinct([for rule in var.weighted_rules : rule.priority])) == length(var.weighted_rules)
+    condition     = length(distinct([for rule in var.weighted_rules : rule.priority])) == length(var.weighted_rules)
     error_message = "Each rule in weighted_rules must have a unique priority."
   }
 
   validation {
-    condition = alltrue([for key in keys(var.weighted_rules) : key != "*"])
+    condition     = alltrue([for key in keys(var.weighted_rules) : key != "*"])
     error_message = "No path in weighted_rules can be '*'. Use var.default_weighting"
   }
 }

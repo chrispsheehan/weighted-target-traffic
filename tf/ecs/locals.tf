@@ -1,7 +1,8 @@
 locals {
-  formatted_name      = replace(var.project_name, "-", "_")
-  cloudwatch_log_name = "/aws/ecs/${local.formatted_name}"
-  image_uri           = var.ecs_image_uri
+  formatted_name          = replace(var.project_name, "-", "_")
+  ecs_security_group_name = "${var.project_name}-ecs-sg"
+  cloudwatch_log_name     = "/aws/ecs/${local.formatted_name}"
+  image_uri               = var.ecs_image_uri
   container_definitions = templatefile("${path.module}/container_definitions.tpl", {
     container_name      = var.project_name
     image_uri           = local.image_uri

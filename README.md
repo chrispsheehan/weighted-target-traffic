@@ -8,9 +8,9 @@ In this use case we can incrementally move endpoints to ECS from Lambda.
 
 `Deploy` workflow - push on `main` trigger
 
-1. **validate** Check terraform code for any errors.
-2. **repo** Setup ECR and S3 repositories.
-3. **network** Apply vpc link and api gateway ingress along with load balancer and rules.
+1. **repo** Setup ECR and S3 repositories.
+2. **network** Apply vpc link and api gateway ingress along with load balancer and rules.
+3. **security** Create security groups which are imported via `data "aws_security_group"`
 4. **image** Build image if changes to `src/*` detected
 5. **code** Build Lambda code as zip if changes to `src/*` detected
 6. **ecs** Apply ECS cluster, service and task. Rolling deployment only.
@@ -23,6 +23,7 @@ In this use case we can incrementally move endpoints to ECS from Lambda.
 2. **lambda** Destroy lambda.
 3. **network** Destroy vpc link and api gateway ingress resources.
 4. **repo** Destroy ecr, images and lambda s3 zips.
+5. **security** Destroy security groups last [THIS AVOIDS CI PAIN](https://github.com/hashicorp/terraform-provider-aws/issues/2445)
 
 ## path weighting rules
 
@@ -88,14 +89,3 @@ Required github action variables.
 - `AWS_ACCOUNT_ID`
 - `AWS_REGION`
 - `AWS_ROLE` role with above deployment privileges
-
-
-## additional spice
-
-Unable to destroy lambda security group (sg). Terraform attempts to delete the sg and is blocked which causes a timeout failure.
-
-**Cause**: lambda is deployed within a VPC by specifying `vpc_config` in the `aws_lambda_function` terraform block.
-
-**Reason**: elastic network interfaces (enis) associated with the sg are still in use on the lambda. This blocks a deletion.
-
-**Solution**: remove the `vpc_config` from the lambda via cli prior to a destroy. This is done via `just detach-function`.

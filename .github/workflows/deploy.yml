@@ -14,24 +14,8 @@ env:
   TF_VAR_project_name: ${{ github.event.repository.name }}
 
 jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: extractions/setup-just@v2
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-region: ${{ vars.aws_region }}
-          role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
-          role-session-name: GitHubActions
-
-      - name: Set image_uri output
-        shell: bash
-        run: just validate
-
   repo:
     runs-on: ubuntu-latest
-    needs: validate
     env:
       TF_VAR_ecr_repo_name: ${{ vars.aws_account_id }}-weighted-target-ecs
       TF_VAR_lambda_code_bucket_name: ${{ vars.aws_account_id }}-weighted-target-lambda-code
@@ -69,6 +53,30 @@ jobs:
           LAMBDA_CODE_BUCKET=$(terraform output -raw lambda_code_bucket)
           echo "ECR_REPO_NAME=$ECR_REPO_NAME" >> $GITHUB_OUTPUT
           echo "LAMBDA_CODE_BUCKET=$LAMBDA_CODE_BUCKET" >> $GITHUB_OUTPUT
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.aws_region }}
+          role-to-assume: arn:aws:iam::${{ vars.aws_account_id }}:role/${{ vars.aws_role }}
+          role-session-name: GitHubActions
+
+      - name: Init
+        shell: bash
+        run: |
+          cd tf/security
+          terraform init
+    
+      - name: Deploy
+        shell: bash
+        id: deploy
+        run: |
+          cd tf/security
+          terraform apply -auto-approve -var-file=${{ github.workspace }}/variables.tfvars
 
   image:
     runs-on: ubuntu-latest
@@ -126,9 +134,8 @@ jobs:
 
   network:
     runs-on: ubuntu-latest
-    needs: validate
+    needs: security
     outputs:
-      lb_security_group_id: ${{ steps.set-envs.outputs.LB_SECURITY_GROUP_ID }}
       lb_ecs_target_group_arn: ${{ steps.set-envs.outputs.LB_ECS_TARGET_GROUP_ARN }}
       lb_lambda_target_group_arn: ${{ steps.set-envs.outputs.LB_LAMBDA_TARGET_GROUP_ARN }}
       api_invoke_url: ${{ steps.set-envs.outputs.API_INVOKE_URL }}
@@ -159,11 +166,9 @@ jobs:
         shell: bash
         run: |
           cd tf/network
-          LB_SECURITY_GROUP_ID=$(terraform output -raw lb_security_group_id)
           API_INVOKE_URL=$(terraform output -raw api_invoke_url)
           LB_ECS_TARGET_GROUP_ARN=$(terraform output -raw lb_ecs_target_group_arn)
           LB_LAMBDA_TARGET_GROUP_ARN=$(terraform output -raw lb_lambda_target_group_arn)
-          echo "LB_SECURITY_GROUP_ID=$LB_SECURITY_GROUP_ID" >> $GITHUB_OUTPUT
           echo "API_INVOKE_URL=$API_INVOKE_URL" >> $GITHUB_OUTPUT
           echo "LB_ECS_TARGET_GROUP_ARN=$LB_ECS_TARGET_GROUP_ARN" >> $GITHUB_OUTPUT
           echo "LB_LAMBDA_TARGET_GROUP_ARN=$LB_LAMBDA_TARGET_GROUP_ARN" >> $GITHUB_OUTPUT
@@ -177,7 +182,6 @@ jobs:
     env:
       TF_VAR_ecr_repo_name: ${{ needs.repo.outputs.ecr_repo_name }}
       TF_VAR_ecs_image_uri: ${{ needs.image.outputs.image_uri }}
-      TF_VAR_lb_security_group_id: ${{ needs.network.outputs.lb_security_group_id }}
       TF_VAR_lb_target_group_arn: ${{ needs.network.outputs.lb_ecs_target_group_arn}}
     steps:
       - uses: actions/checkout@v4
@@ -210,7 +214,6 @@ jobs:
     env:
       TF_VAR_lambda_zip: ${{ needs.code.outputs.lambda_zip }}
       TF_VAR_lambda_bucket: ${{ needs.repo.outputs.lambda_code_bucket }}
-      TF_VAR_lb_security_group_id: ${{ needs.network.outputs.lb_security_group_id }}
       TF_VAR_lb_target_group_arn: ${{ needs.network.outputs.lb_lambda_target_group_arn}}
     steps:
       - uses: actions/checkout@v4

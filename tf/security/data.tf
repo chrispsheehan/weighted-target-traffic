@@ -1,13 +1,3 @@
-data "aws_caller_identity" "current" {}
-
-data "aws_security_group" "lb_sg" {
-  name = local.lb_security_group_name
-}
-
-data "aws_security_group" "vpc_link" {
-  name = local.vpc_link_security_group_name
-}
-
 data "aws_vpc" "private" {
   filter {
     name   = "tag:Name"
@@ -22,14 +12,14 @@ data "aws_subnets" "private" {
   }
 }
 
-data "aws_subnet" "subnets" {
-  for_each = toset(data.aws_subnets.private.ids)
-  id       = each.value
-}
-
 data "aws_route_tables" "subnet_route_tables" {
   filter {
     name   = "association.subnet-id"
     values = data.aws_subnets.private.ids
   }
+}
+
+data "aws_subnet" "subnets" {
+  for_each = toset(data.aws_subnets.private.ids)
+  id       = each.value
 }

@@ -31,10 +31,6 @@ variable "ecs_image_uri" {
   type = string
 }
 
-variable "lb_security_group_id" {
-  type = string
-}
-
 variable "lb_target_group_arn" {
   type = string
 }

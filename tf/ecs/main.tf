@@ -58,25 +58,7 @@ resource "aws_ecs_cluster" "cluster" {
   name = "${var.project_name}-cluster"
 }
 
-resource "aws_security_group" "ecs_sg" {
-  vpc_id = data.aws_vpc.private.id
-  name   = "${var.project_name}-ecs-sg"
 
-  ingress {
-    from_port       = 0
-    to_port         = var.ecs_container_port
-    protocol        = "tcp"
-    security_groups = [var.lb_security_group_id]
-  }
-
-  egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"          # Allow all protocols
-    cidr_blocks      = ["0.0.0.0/0"] # Allow all IPv4 traffic
-    ipv6_cidr_blocks = ["::/0"]      # Allow all IPv6 traffic
-  }
-}
 
 resource "aws_ecs_service" "ecs" {
   name                  = var.project_name
@@ -97,7 +79,7 @@ resource "aws_ecs_service" "ecs" {
 
   network_configuration {
     assign_public_ip = false
-    security_groups  = [aws_security_group.ecs_sg.id]
+    security_groups  = [data.aws_security_group.ecs_sg.id]
     subnets          = data.aws_subnets.private.ids
   }
 

@@ -1,22 +1,3 @@
-resource "aws_security_group" "lb_sg" {
-  vpc_id = data.aws_vpc.private.id
-  name   = "${var.project_name}-lb-sg"
-
-  ingress {
-    from_port   = var.load_balancer_port
-    to_port     = var.load_balancer_port
-    protocol    = "tcp"
-    cidr_blocks = local.private_subnet_cidrs
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = [data.aws_vpc.private.cidr_block]
-  }
-}
-
 resource "aws_lb" "lb" {
   name               = local.lb_name
   internal           = true
@@ -24,7 +5,7 @@ resource "aws_lb" "lb" {
 
   enable_deletion_protection = false
 
-  security_groups = [aws_security_group.lb_sg.id]
+  security_groups = [data.aws_security_group.lb_sg.id]
   subnets         = data.aws_subnets.private.ids
 
   enable_cross_zone_load_balancing = true
@@ -114,30 +95,10 @@ resource "aws_lb_target_group" "lambda_tg" {
   }
 }
 
-resource "aws_security_group" "api_gateway_vpc_link" {
-  name        = "${var.project_name}-api-gateway-vpc-link-sg"
-  description = "Security group for API Gateway VPC link"
-  vpc_id      = data.aws_vpc.private.id
-
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = local.private_subnet_cidrs
-  }
-
-  egress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = local.private_subnet_cidrs
-  }
-}
-
 resource "aws_apigatewayv2_vpc_link" "this" {
   name               = "${var.project_name}-vpc-link"
   subnet_ids         = data.aws_subnets.private.ids
-  security_group_ids = [aws_security_group.api_gateway_vpc_link.id]
+  security_group_ids = [data.aws_security_group.vpc_link.id]
 }
 
 resource "aws_apigatewayv2_api" "this" {

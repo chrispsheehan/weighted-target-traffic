@@ -1,23 +1,3 @@
-resource "aws_security_group" "lambda_sg" {
-  vpc_id = data.aws_vpc.private.id
-  name   = "${var.project_name}-lambda-sg"
-
-  ingress {
-    from_port       = 0
-    to_port         = 0
-    protocol        = -1
-    security_groups = [var.lb_security_group_id]
-  }
-
-  egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"          # Allow all protocols
-    cidr_blocks      = ["0.0.0.0/0"] # Allow all IPv4 traffic
-    ipv6_cidr_blocks = ["::/0"]      # Allow all IPv6 traffic
-  }
-}
-
 resource "aws_iam_role" "iam_for_lambda" {
   name               = "${local.lambda_name}-iam"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
@@ -56,7 +36,7 @@ resource "aws_lambda_function" "this" {
 
   vpc_config {
     subnet_ids         = data.aws_subnets.private.ids
-    security_group_ids = [aws_security_group.lambda_sg.id]
+    security_group_ids = [data.aws_security_group.lambda_sg.id]
   }
 
   environment {

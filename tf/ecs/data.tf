@@ -1,3 +1,7 @@
+data "aws_security_group" "ecs_sg" {
+  name = local.ecs_security_group_name
+}
+
 data "aws_vpc" "private" {
   filter {
     name   = "tag:Name"

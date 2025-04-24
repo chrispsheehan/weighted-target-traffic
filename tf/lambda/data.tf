@@ -1,3 +1,7 @@
+data "aws_security_group" "lambda_sg" {
+  name = local.lambda_security_group_name
+}
+
 data "aws_vpc" "private" {
   filter {
     name   = "tag:Name"

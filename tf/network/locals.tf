@@ -1,5 +1,6 @@
 locals {
-  private_subnet_cidrs = [for s in data.aws_subnet.subnets : s.cidr_block]
-  lb_name              = "${var.project_name}-lb"
-  healthcheck_path     = "/health"
+  lb_name          = "${var.project_name}-lb"
+  healthcheck_path = "/health"
+  lb_security_group_name       = "${var.project_name}-lb-sg"
+  vpc_link_security_group_name = "${var.project_name}-api-gateway-vpc-link-sg"
 }

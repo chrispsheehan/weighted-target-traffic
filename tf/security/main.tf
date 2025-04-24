@@ -1,6 +1,10 @@
 resource "aws_security_group" "ecs_sg" {
   vpc_id = data.aws_vpc.private.id
   name   = local.ecs_security_group_name
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_security_group_rule" "ecs_ingress_from_lb" {
@@ -26,6 +30,10 @@ resource "aws_security_group_rule" "ecs_egress_https" {
 resource "aws_security_group" "lambda_sg" {
   vpc_id = data.aws_vpc.private.id
   name   = local.lambda_security_group_name
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_security_group_rule" "lambda_ingress_from_lb" {
@@ -50,6 +58,10 @@ resource "aws_security_group_rule" "lambda_egress_to_logs" {
 resource "aws_security_group" "lb_sg" {
   vpc_id = data.aws_vpc.private.id
   name   = local.lb_security_group_name
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_security_group_rule" "lb_ingress_from_private_subnets" {
@@ -75,6 +87,10 @@ resource "aws_security_group" "api_gateway_vpc_link" {
   name        = local.vpc_link_security_group_name
   description = "Security group for API Gateway VPC link"
   vpc_id      = data.aws_vpc.private.id
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_security_group_rule" "vpc_link_ingress_http" {

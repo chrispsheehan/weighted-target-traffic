@@ -6,6 +6,6 @@ output "lb_lambda_target_group_arn" {
   value = aws_lb_target_group.lambda_tg.arn
 }
 
-output "api_invoke_url" {
-  value = aws_apigatewayv2_stage.this.invoke_url
+output "ecs_lambda_listener_arn" {
+  value = aws_lb_listener.ecs_lambda_listener.arn
 }

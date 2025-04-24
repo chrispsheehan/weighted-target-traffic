@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - separate-api-job
   workflow_dispatch:
 
 permissions:

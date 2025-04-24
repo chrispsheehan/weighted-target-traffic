@@ -1,4 +1,5 @@
 locals {
+  lambda_port = 65535
   private_vpc_id         = data.aws_vpc.private.id
   private_vpc_cidr_block = data.aws_vpc.private.cidr_block
   private_subnet_ids     = data.aws_subnets.private.ids

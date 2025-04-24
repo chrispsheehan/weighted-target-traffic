@@ -9,7 +9,7 @@ terraform {
 
   backend "s3" {
     bucket         = "chrispsheehan-weighted-target-traffic-tfstate"
-    key            = "repo-state/terraform.tfstate"
+    key            = "security-state/terraform.tfstate"
     region         = "eu-west-2"
     encrypt        = true
     dynamodb_table = "chrispsheehan-weighted-target-traffic-tf-lockid"

@@ -140,21 +140,21 @@ resource "aws_security_group_rule" "vpc_link_ingress_http" {
   protocol          = "tcp"
   security_group_id = aws_security_group.api_gateway_vpc_link.id
   cidr_blocks       = local.private_subnet_cidrs
-  description       = "Allow HTTP ingress from private subnets to API Gateway VPC Link"
+  description       = "Allow HTTP ingress from private subnets to API Gateway VPC Link - THIS HAS NO AFFECT"
 
   lifecycle {
     create_before_destroy = true
   }
 }
 
-resource "aws_security_group_rule" "vpc_link_egress_http" {
-  type              = "egress"
-  from_port         = 80
-  to_port           = 80
-  protocol          = "tcp"
-  security_group_id = aws_security_group.api_gateway_vpc_link.id
-  cidr_blocks       = local.private_subnet_cidrs
-  description       = "Allow HTTP egress from API Gateway VPC Link to private subnets"
+resource "aws_security_group_rule" "vpc_link_egress_to_alb" {
+  type                     = "egress"
+  from_port                = 80
+  to_port                  = 80
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.api_gateway_vpc_link.id
+  source_security_group_id = aws_security_group.lb_sg.id
+  description              = "Allow HTTP egress from API Gateway VPC Link to ALB only"
 
   lifecycle {
     create_before_destroy = true

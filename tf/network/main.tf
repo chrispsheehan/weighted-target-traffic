@@ -52,7 +52,7 @@ resource "aws_lb_listener" "ecs_lambda_listener" {
 }
 
 resource "aws_lb_listener_rule" "weighted_rule" {
-  for_each     = var.weighted_rules
+  for_each     = local.weighted_rules_with_priority
   listener_arn = aws_lb_listener.ecs_lambda_listener.arn
   priority     = each.value.priority
 

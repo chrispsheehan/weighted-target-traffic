@@ -1,6 +1,6 @@
 locals {
-  lb_name                      = "${var.project_name}-lb"
   healthcheck_path             = "/health"
+  lb_name                      = "${var.project_name}-lb"
   lb_security_group_name       = "${var.project_name}-lb-sg"
 
   # Normalize default_weighting

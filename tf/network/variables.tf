@@ -23,39 +23,31 @@ variable "private_vpc_name" {
 }
 
 variable "default_weighting" {
-  description = "Weighting for the default action between ECS and Lambda"
-  type = object({
-    ecs_percentage_traffic    = number
-    lambda_percentage_traffic = number
-  })
-  default = {
-    ecs_percentage_traffic    = 0
-    lambda_percentage_traffic = 100
+  description = "Which backend to use for the default route: 'ecs' or 'lambda'"
+  type        = string
+  default     = "lambda"
+
+  validation {
+    condition     = var.default_weighting == "ecs" || var.default_weighting == "lambda"
+    error_message = "default_weighting must be either 'ecs' or 'lambda'."
   }
 }
 
 variable "weighted_rules" {
-  type = map(object({
-    ecs_percentage_traffic    = number
-    lambda_percentage_traffic = number
-  }))
+  description = "Map of path names to their preferred backend: 'ecs' or 'lambda'"
+  type        = map(string)
+
   default = {
-    "host" = {
-      ecs_percentage_traffic    = 50
-      lambda_percentage_traffic = 50
-    },
-    "small-woodland-creature" = {
-      ecs_percentage_traffic    = 100
-      lambda_percentage_traffic = 0
-    },
-    "ice-cream-flavour" = {
-      ecs_percentage_traffic    = 0
-      lambda_percentage_traffic = 100
-    }
+    "host"                    = "ecs"
+    "small-woodland-creature" = "lambda"
+    "ice-cream-flavour"       = "lambda"
   }
 
   validation {
-    condition     = alltrue([for key in keys(var.weighted_rules) : key != "*"])
-    error_message = "No path in weighted_rules can be '*'. Use var.default_weighting"
+    condition = alltrue([
+      for backend in values(var.weighted_rules) :
+      backend == "ecs" || backend == "lambda"
+    ])
+    error_message = "Each weighted_rules value must be either 'ecs' or 'lambda'."
   }
 }

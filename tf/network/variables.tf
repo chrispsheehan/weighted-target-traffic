@@ -23,31 +23,60 @@ variable "private_vpc_name" {
 }
 
 variable "default_weighting" {
-  description = "Which backend to use for the default route: 'ecs' or 'lambda'"
-  type        = string
-  default     = "lambda"
+  description = "Which backend to use for the default route (ecs, lambda, or split strategy)"
+  type = object({
+    strategy                  = string
+    ecs_percentage_traffic    = optional(number)
+    lambda_percentage_traffic = optional(number)
+  })
+
+  default = {
+    strategy = "lambda"
+  }
 
   validation {
-    condition     = var.default_weighting == "ecs" || var.default_weighting == "lambda"
-    error_message = "default_weighting must be either 'ecs' or 'lambda'."
+    condition = (
+      contains(["ecs", "lambda", "split"], var.default_weighting.strategy) &&
+      (
+        var.default_weighting.strategy != "split" ||
+        try(var.default_weighting.ecs_percentage_traffic + var.default_weighting.lambda_percentage_traffic, -1) == 100
+      )
+    )
+    error_message = "Strategy must be 'ecs', 'lambda', or 'split'. If 'split', ecs + lambda must equal 100."
   }
 }
 
 variable "weighted_rules" {
-  description = "Map of path names to their preferred backend: 'ecs' or 'lambda'"
-  type        = map(string)
+  description = "Per-endpoint routing rules (ecs, lambda, or split strategy)"
+  type = map(object({
+    strategy                  = string
+    ecs_percentage_traffic    = optional(number)
+    lambda_percentage_traffic = optional(number)
+  }))
 
   default = {
-    "host"                    = "ecs"
-    "small-woodland-creature" = "lambda"
-    "ice-cream-flavour"       = "lambda"
+    "ice-cream-flavour" = {
+      strategy = "lambda"
+    },
+    "small-woodland-creature" = {
+      strategy = "ecs"
+    },
+    "host" = {
+      strategy = "split"
+      ecs_percentage_traffic = 50
+      lambda_percentage_traffic = 50
+    }
   }
 
   validation {
     condition = alltrue([
-      for backend in values(var.weighted_rules) :
-      backend == "ecs" || backend == "lambda"
+      for rule in values(var.weighted_rules) :
+      contains(["ecs", "lambda", "split"], rule.strategy) &&
+      (
+        rule.strategy != "split" ||
+        try(rule.ecs_percentage_traffic + rule.lambda_percentage_traffic, -1) == 100
+      )
     ])
-    error_message = "Each weighted_rules value must be either 'ecs' or 'lambda'."
+    error_message = "Each rule must have strategy 'ecs', 'lambda', or 'split'. If 'split', percentages must sum to 100."
   }
 }

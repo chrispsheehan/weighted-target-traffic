@@ -23,48 +23,60 @@ variable "private_vpc_name" {
 }
 
 variable "default_weighting" {
-  description = "Weighting for the default action between ECS and Lambda"
+  description = "Which backend to use for the default route (ecs, lambda, or split strategy)"
   type = object({
-    ecs_percentage_traffic    = number
-    lambda_percentage_traffic = number
+    strategy                  = string
+    ecs_percentage_traffic    = optional(number)
+    lambda_percentage_traffic = optional(number)
   })
+
   default = {
-    ecs_percentage_traffic    = 0
-    lambda_percentage_traffic = 100
+    strategy = "lambda"
+  }
+
+  validation {
+    condition = (
+      contains(["ecs", "lambda", "split"], var.default_weighting.strategy) &&
+      (
+        var.default_weighting.strategy != "split" ||
+        try(var.default_weighting.ecs_percentage_traffic + var.default_weighting.lambda_percentage_traffic, -1) == 100
+      )
+    )
+    error_message = "Strategy must be 'ecs', 'lambda', or 'split'. If 'split', ecs + lambda must equal 100."
   }
 }
 
 variable "weighted_rules" {
+  description = "Per-endpoint routing rules (ecs, lambda, or split strategy)"
   type = map(object({
-    ecs_percentage_traffic    = number
-    lambda_percentage_traffic = number
-    priority                  = number
+    strategy                  = string
+    ecs_percentage_traffic    = optional(number)
+    lambda_percentage_traffic = optional(number)
   }))
+
   default = {
-    "host" = {
-      ecs_percentage_traffic    = 50
-      lambda_percentage_traffic = 50
-      priority                  = 300
+    "ice-cream-flavour" = {
+      strategy = "lambda"
     },
     "small-woodland-creature" = {
-      ecs_percentage_traffic    = 100
-      lambda_percentage_traffic = 0
-      priority                  = 200
+      strategy = "ecs"
     },
-    "ice-cream-flavour" = {
-      ecs_percentage_traffic    = 0
-      lambda_percentage_traffic = 100
-      priority                  = 100
+    "host" = {
+      strategy = "split"
+      ecs_percentage_traffic = 50
+      lambda_percentage_traffic = 50
     }
   }
 
   validation {
-    condition     = length(distinct([for rule in var.weighted_rules : rule.priority])) == length(var.weighted_rules)
-    error_message = "Each rule in weighted_rules must have a unique priority."
-  }
-
-  validation {
-    condition     = alltrue([for key in keys(var.weighted_rules) : key != "*"])
-    error_message = "No path in weighted_rules can be '*'. Use var.default_weighting"
+    condition = alltrue([
+      for rule in values(var.weighted_rules) :
+      contains(["ecs", "lambda", "split"], rule.strategy) &&
+      (
+        rule.strategy != "split" ||
+        try(rule.ecs_percentage_traffic + rule.lambda_percentage_traffic, -1) == 100
+      )
+    ])
+    error_message = "Each rule must have strategy 'ecs', 'lambda', or 'split'. If 'split', percentages must sum to 100."
   }
 }

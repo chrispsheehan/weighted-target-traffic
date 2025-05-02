@@ -30,38 +30,29 @@ In this use case we can incrementally move endpoints to ECS from Lambda.
 - Passed in as `terraform apply -var='weighted_rules={}'` default value json shown below.
 - For each path define weighting to lambda and/or ecs.
 - In the below:
-  - `host` will be weighted 50/50 to ecs/lambda.
+  - `host` will be weighted 50/50 to ecs/lambda. Using the `split` strategy.
   - `small-woodland-creature` will go to ecs only.
   - `ice-cream-flavour` will go to lambda only.
 
 ```hcl
 {
-  "host" = {
-    ecs_percentage_traffic    = 50
-    lambda_percentage_traffic = 50
-    priority                  = 300
-  },
-  "small-woodland-creature" = {
-    ecs_percentage_traffic    = 100
-    lambda_percentage_traffic = 0
-    priority                  = 200
-  },
-  "ice-cream-flavour" = {
-    ecs_percentage_traffic    = 0
-    lambda_percentage_traffic = 100
-    priority                  = 100
+    "ice-cream-flavour" = {
+      strategy = "lambda"
+    },
+    "small-woodland-creature" = {
+      strategy = "ecs"
+    },
+    "host" = {
+      strategy = "split"
+      ecs_percentage_traffic = 50
+      lambda_percentage_traffic = 50
+    }
   }
-}
 ```
 
-- Default values are set with `terraform apply -var='default_weighting'` the below example sends all traffic to lambda.
-
-```hcl
-{
-  ecs_percentage_traffic    = 0
-  lambda_percentage_traffic = 100
-}
-```
+- Default values are set with `terraform apply -var='default_weighting={strategy="lambda"}'` this example sends all traffic to lambda.
+  - a split as a defualt can be achieved with `terraform apply -var='default_weighting={strategy="split",ecs_percentage_traffic=30,lambda_percentage_traffic=70}'`. Which would send 30% traffic to ecs and 70% to lambda.
+ 
 
 ## terraform
 

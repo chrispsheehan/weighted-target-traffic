@@ -41,18 +41,18 @@ resource "aws_lb_listener" "ecs_lambda_listener" {
     forward {
       target_group {
         arn    = aws_lb_target_group.ecs_tg.arn
-        weight = var.default_weighting.ecs_percentage_traffic
+        weight = local.default_ecs_percentage_traffic
       }
       target_group {
         arn    = aws_lb_target_group.lambda_tg.arn
-        weight = var.default_weighting.lambda_percentage_traffic
+        weight = local.default_lambda_percentage_traffic
       }
     }
   }
 }
 
 resource "aws_lb_listener_rule" "weighted_rule" {
-  for_each     = var.weighted_rules
+  for_each     = local.weighted_rules_with_priority
   listener_arn = aws_lb_listener.ecs_lambda_listener.arn
   priority     = each.value.priority
 
